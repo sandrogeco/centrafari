@@ -2,7 +2,10 @@ import os
 import cv2
 import numpy as np
 import subprocess
+from matplotlib import  pyplot as plt
+import matplotlib as mpl
 
+mpl.use('tkagg')
 #region Funzioni
 
 WHITE = (255, 255, 255)[::-1]
@@ -129,7 +132,68 @@ def rileva_punto_angoloso(image_input, image_output):
 
     return image_output, None
 
+
+def dspl(x,image,cl=False):
+    cv2.imshow(x, image)
+    cv2.waitKey(0)
+    if cl:
+        cv2.destroyAllWindows()
+
+def trova_contrni_abbagliante(image_input, image_output):
+    WIDTH_PIXEL = image_input.shape[1]
+    AREA=image_input.shape[0]*image_input.shape[1]
+    LEVEL=0.9
+    imout =image_input.copy()
+
+    cv2.normalize(image_input,imout,0,255,cv2.NORM_MINMAX)
+    cv2.fastNlMeansDenoising(imout,imout,1000)
+
+    imout1=imout.copy()
+    #imout2=imout.copy()
+    c=np.cumsum(np.histogram(imout1.reshape(AREA),bins=255)[0])/AREA
+    l=np.where(c>LEVEL)[0][0]
+    imout1[imout<l]=0
+    nup=np.sum([imout1>0])
+
+    x = np.arange(imout1.shape[1])
+    y = np.arange(imout1.shape[0])
+    xx, yy = np.meshgrid(x, y)
+
+    A = imout1.sum()
+
+    x_cms = (np.int32)((xx * imout1).sum() / A)
+    y_cms = (np.int32)((yy * imout1).sum() / A)
+
+    cv2.putText(image_output, 'aut-level '+str(l)+' num pixel brighter '+str(nup), (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+    cv2.putText(image_output, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+
+    try:
+        edges = cv2.Canny(imout1, 50, 150)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour=max(contours, key=lambda d: cv2.contourArea(d))
+        cv2.drawContours(image_output, [contour], -1, RED, 1)
+        cv2.circle(image_output, (x_cms, y_cms), 6, GREEN, -1)
+    except:
+        print('err')
+    print(x_cms, y_cms)
+
+    #dspl('ctr',imout)
+    return image_output, None
+
+test=True
 if __name__ == "__main__":
+    if test:
+        path_image='faro_xenon_abbagliante/faro_xenon_abbagliante_spostatoSX_pellicola45/bri_0_contr_0_expabs_500.jpg'
+        image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
+        image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+        # image_output, err = rileva_punto_angoloso(image_input, image_output)
+        image_output, err = trova_contrni_abbagliante(image_input, image_output)
+
+
+
+
+
+
     # Genera lista immagini da analizzare --------------------------------------
     lista_immagini: list = []
 
@@ -138,7 +202,7 @@ if __name__ == "__main__":
         path_root_out = "/tmp/OUT"
         subprocess.check_output(f"rm -rf {path_root_out}/*", shell=True)
         # for path_root in ["/tmp/faro_alogeno_anabbagliante", "/tmp/faro_xenon_anabbagliante", "/tmp/faro_xenon_abbagliante"]:
-        for path_root in ["/tmp/faro_xenon_anabbagliante"]:
+        for path_root in ["faro_xenon_abbagliante"]:
             if not os.path.exists(path_root):
                 continue
             # for situazione in ['faro_alogeno_anabbagliante_12volt_0incl_centrato_pellicola45']:
@@ -188,7 +252,8 @@ if __name__ == "__main__":
             continue
         image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
 
-        image_output, err = rileva_punto_angoloso(image_input, image_output)
+        #image_output, err = rileva_punto_angoloso(image_input, image_output)
+        image_output,err=trova_contrni_abbagliante(image_input, image_output)
         assert image_output is not None
 
         if err is not None:
@@ -197,3 +262,4 @@ if __name__ == "__main__":
         path_image_out = immagine['path_image_out']
         os.makedirs(os.path.dirname(path_image_out), exist_ok=True)
         cv2.imwrite(path_image_out, image_output)
+
