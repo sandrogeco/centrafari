@@ -13,6 +13,9 @@ BLACK = (0, 0, 0)[::-1]
 RED = (255, 0, 0)[::-1]
 GREEN = (0, 255, 0)[::-1]
 BLUE = (0, 0, 255)[::-1]
+MCORR=np.array([[1.19962087e+00, 3.03070135e-01, -6.59806746e+01],
+           [5.05979992e-03, 1.64790684e+00, -7.66065165e+01],
+           [-1.08610130e-04, 1.09172033e-03, 1.00000000e+00]])
 
 def find_y_by_x(contour, x):
     c = contour[:, 0, :]
@@ -139,13 +142,16 @@ def dspl(x,image,cl=False):
     if cl:
         cv2.destroyAllWindows()
 
-def trova_contrni_abbagliante(image_input, image_output):
+def trova_contrni_abbagliante(image_input):
     WIDTH_PIXEL = image_input.shape[1]
     AREA=image_input.shape[0]*image_input.shape[1]
     LEVEL=0.9
     imout =image_input.copy()
 
-    cv2.normalize(image_input,imout,0,255,cv2.NORM_MINMAX)
+    imout= cv2.warpPerspective(imout, MCORR, (imout.shape[1],imout.shape[0]))
+
+
+    cv2.normalize(imout,imout,0,255,cv2.NORM_MINMAX)
     cv2.fastNlMeansDenoising(imout,imout,1000)
 
     imout1=imout.copy()
@@ -164,30 +170,71 @@ def trova_contrni_abbagliante(image_input, image_output):
     x_cms = (np.int32)((xx * imout1).sum() / A)
     y_cms = (np.int32)((yy * imout1).sum() / A)
 
-    cv2.putText(image_output, 'aut-level '+str(l)+' num pixel brighter '+str(nup), (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
-    cv2.putText(image_output, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+    print(x_cms, y_cms)
+
+    imout=cv2.cvtColor(imout, cv2.COLOR_GRAY2BGR)
+
+    cv2.putText(imout, 'aut-level '+str(l)+' num pixel brighter '+str(nup), (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+    cv2.putText(imout, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
 
     try:
         edges = cv2.Canny(imout1, 50, 150)
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contour=max(contours, key=lambda d: cv2.contourArea(d))
-        cv2.drawContours(image_output, [contour], -1, RED, 1)
-        cv2.circle(image_output, (x_cms, y_cms), 6, GREEN, -1)
+        cv2.drawContours(imout, [contour], -1, RED, 1)
+        cv2.circle(imout, (x_cms, y_cms), 6, GREEN, -1)
     except:
         print('err')
-    print(x_cms, y_cms)
 
-    #dspl('ctr',imout)
-    return image_output, None
+    return imout, None
+
+
+def correzione_prospettiva(img):
+    src_pts = np.float32([
+        [205, 144],  # in alto a sinistra
+        [423, 141],  # in alto a destra
+        [453, 356],  # in basso a destra
+        [189, 366]  # in basso a sinistra
+    ])
+
+    width=((src_pts[2][0]-src_pts[3][0])+(src_pts[1][0]-src_pts[0][0]))/2
+    xm=(src_pts[0][0]+src_pts[3][0])/2
+    ym = (src_pts[0][1] + src_pts[1][1]) / 2
+    height=width
+   # width, height = 500, 700  # cambia in base al tuo caso
+
+    dst_pts = np.float32([
+        [xm, ym],
+        [xm+width - 1, ym],
+        [xm+width - 1, ym+height - 1],
+        [xm, ym+height - 1]
+    ])
+
+    M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+
+    warped = cv2.warpPerspective(img, M, np.int32((width, height)))
+
+    return warped
+
+
+
 
 test=True
 if __name__ == "__main__":
     if test:
+        # path_image = 'frame.jpg'
+        # image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
+        # image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+        # # image_output, err = rileva_punto_angoloso(image_input, image_output)
+        # img_corr=correzione_prospettiva(image_output)
+        # image_output, err = trova_contrni_abbagliante(image_input, image_output)
+
+
         path_image='faro_xenon_abbagliante/faro_xenon_abbagliante_spostatoSX_pellicola45/bri_0_contr_0_expabs_500.jpg'
         image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
         image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-        # image_output, err = rileva_punto_angoloso(image_input, image_output)
-        image_output, err = trova_contrni_abbagliante(image_input, image_output)
+       # image_output, err = rileva_punto_angoloso(image_input, image_output)
+        image_output, err = trova_contrni_abbagliante(image_input)
 
 
 
@@ -253,7 +300,7 @@ if __name__ == "__main__":
         image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
 
         #image_output, err = rileva_punto_angoloso(image_input, image_output)
-        image_output,err=trova_contrni_abbagliante(image_input, image_output)
+        image_output,err=trova_contrni_abbagliante(image_input)
         assert image_output is not None
 
         if err is not None:
