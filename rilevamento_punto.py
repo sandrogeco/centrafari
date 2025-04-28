@@ -85,7 +85,7 @@ def rileva_punto_angoloso(image_input, image_output):
     # Analisi contorno
     cv2.drawContours(image_output, [contour], -1, RED, 1)
 
-    delta = 20
+    delta = 5
     punti = []
 
     for p in range(delta, 100 - delta, 1):
@@ -107,16 +107,16 @@ def rileva_punto_angoloso(image_input, image_output):
         v_succ = (x_succ, y_succ)
 
         angolo = -angolo_esterno_vettori(differenza_vettori(v_prec, v), differenza_vettori(v_succ, v))
-
+        #secondo me c'è un errore
         v_prec_verso_alto = angolo_vettori((1, 0), differenza_vettori(v_prec, v)) > 0
 
         if angolo > 0 and 5 < angolo < 20 and v_prec_verso_alto:
             punti.append(v)
-            # cv2.circle(image_output, v, 2, GREEN, -1)
-            # Decommenta queste due o tre linee sotto per visualizzare i vettori che danno l'angolo e per scrivere l'angolo
-            # cv2.line(image_output, v_prec, v, GREEN, 1)
-            # cv2.line(image_output, v, v_succ, GREEN, 1)
-            # cv2.putText(image_output, f'{int(angolo)}', somma_vettori(v, (10, 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, GREEN, 4)
+            cv2.circle(image_output, v, 2, GREEN, -1)
+        # Decommenta queste due o tre linee sotto per visualizzare i vettori che danno l'angolo e per scrivere l'angolo
+            cv2.line(image_output, v_prec, v, GREEN, 1)
+            cv2.line(image_output, v, v_succ, GREEN, 1)
+            cv2.putText(image_output, f'{int(angolo)}', somma_vettori(v, (10, 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, GREEN, 4)
 
     # Rimuovo i punti che sono troppo vicini alle estremita' del contour
     min_contour_x = np.min(contour[:, 0, 0])
@@ -125,7 +125,7 @@ def rileva_punto_angoloso(image_input, image_output):
     punti = [p for p in punti if min_contour_x + (0.05 * range_contour_x) < p[0] < max_contour_x - (0.05 * range_contour_x)]
 
     if len(punti) == 0:
-        return image_output, '[rileva_punto_angoloso] nessun punto trovato'
+        return image_output, (0,0),'[rileva_punto_angoloso] nessun punto trovato'
 
     for punto in punti:
         cv2.circle(image_output, punto, 2, GREEN, -1)
@@ -133,7 +133,7 @@ def rileva_punto_angoloso(image_input, image_output):
     punto_finale = tuple(np.median(punti, axis=0).astype(np.int32))
     cv2.circle(image_output, punto_finale, 6, GREEN, -1)
 
-    return image_output, None
+    return image_output,punto_finale, None
 
 
 def dspl(x,image,cl=False):
@@ -174,17 +174,22 @@ def trova_contrni_abbagliante(image_input):
 
     imout=cv2.cvtColor(imout, cv2.COLOR_GRAY2BGR)
 
-    cv2.putText(imout, 'aut-level '+str(l)+' num pixel brighter '+str(nup), (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
-    cv2.putText(imout, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
-
     try:
         edges = cv2.Canny(imout1, 50, 150)
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contour=max(contours, key=lambda d: cv2.contourArea(d))
+        lux = lum_zones(imout, x_cms, y_cms,50)
         cv2.drawContours(imout, [contour], -1, RED, 1)
         cv2.circle(imout, (x_cms, y_cms), 6, GREEN, -1)
+        cv2.putText(imout, 'aut-level ' + str(l) + ' num pixel brighter ' + str(nup), (5, 20),
+                    cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+        cv2.putText(imout, 'x:' + str(x_cms) + ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+        cv2.putText(imout, 'LUM:' + str(lux) , (5, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+
     except:
         print('err')
+
+
 
     return imout, None
 
@@ -194,7 +199,8 @@ def lum_zones(img_input,x,y,r):
     cv2.circle(img,[x,y],r,[1,1,1],-1)
     img=img*img_input
     l=np.mean(img[img>0])
-    return img,l
+    cv2.circle(img_input, [x, y], r, GREEN)
+    return l
 
 
 def correzione_prospettiva(img):
@@ -227,94 +233,46 @@ def correzione_prospettiva(img):
 
 
 
-test=True
+test='ana'
 if __name__ == "__main__":
-    if test:
-        # path_image = 'frame.jpg'
-        # image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
-        # image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-        # # image_output, err = rileva_punto_angoloso(image_input, image_output)
-        # img_corr=correzione_prospettiva(image_output)
-        # image_output, err = trova_contrni_abbagliante(image_input, image_output)
+    if test=='PI':
+
+        cap = cv2.VideoCapture(0)
+        ret, frame = cap.read()
+
+        if not ret:
+            print("Failed to grab frame")
+        else:
+            # Save the image
+            cv2.imwrite("/tmp/capture.jpg", frame)
+            image_input = cv2.imread("/tmp/capture.jpg", cv2.IMREAD_GRAYSCALE)
+            image_output = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+            image_output, err = trova_contrni_abbagliante(image_output)
 
 
-        path_image='faro_xenon_abbagliante/faro_xenon_abbagliante_spostatoSX_pellicola45/bri_0_contr_0_expabs_500.jpg'
+    if test=='ana':
+        # Release the camera
+
+      #  path_image='faro_xenon_abbagliante/faro_xenon_abbagliante_centrato_pellicola45/bri_0_contr_0_expabs_50.jpg'
+        path_image = 'faro_xenon_anabbagliante/faro_xenon_anabbagliante_centrato_pellicola45/bri_0_contr_0_expabs_500.jpg'
         image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
         image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-       # image_output, err = rileva_punto_angoloso(image_input, image_output)
+        image_output,pt, err = rileva_punto_angoloso(image_input, image_output)
+        lux1=lum_zones(image_output,pt[0]+100,pt[1]+100,80)
+        lux2 = lum_zones(image_output, pt[0]-200, pt[1]+100, 80)
+        cv2.putText(image_output, 'LUM:' + str(lux1)+" "+str(lux2), (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
+
+
+    if test == 'abb':
+        # Release the camera
+
+        path_image = 'faro_xenon_abbagliante/faro_xenon_abbagliante_centrato_pellicola45/bri_0_contr_0_expabs_50.jpg'
+        image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
+        image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+        # image_output, err = rileva_punto_angoloso(image_input, image_output)
         image_output, err = trova_contrni_abbagliante(image_input)
 
+    dspl('x',image_output,True)
+    print('h')
 
-
-
-
-
-    # Genera lista immagini da analizzare --------------------------------------
-    lista_immagini: list = []
-
-    # Tutte le immagini
-    if True:
-        path_root_out = "/tmp/OUT"
-        subprocess.check_output(f"rm -rf {path_root_out}/*", shell=True)
-        # for path_root in ["/tmp/faro_alogeno_anabbagliante", "/tmp/faro_xenon_anabbagliante", "/tmp/faro_xenon_abbagliante"]:
-        for path_root in ["faro_xenon_abbagliante"]:
-            if not os.path.exists(path_root):
-                continue
-            # for situazione in ['faro_alogeno_anabbagliante_12volt_0incl_centrato_pellicola45']:
-            for situazione in os.listdir(path_root):
-                path_folder = os.path.join(path_root, situazione)
-                path_folder_out = os.path.join(path_root_out, path_root.split('/')[-1], situazione)
-                os.makedirs(path_folder_out, exist_ok=True)
-                for filename_image in os.listdir(path_folder):
-                    lista_immagini.append({
-                        'path_image': os.path.join(path_folder, filename_image),
-                        'path_image_out': os.path.join(path_folder_out, filename_image),
-                    })
-
-    # Immagini particolari scelte a mano di casi patologici che devono essere corretti
-    # In questo modo si possono fare modifiche e valutare subito se questi casi migliorano e quando
-    # sono migliorati se ci sono regressioni
-    if True:
-        path_root_out = "/tmp/OUT2"
-        subprocess.check_output(f"rm -rf {path_root_out}/*", shell=True)
-
-        lista_immagini.append({
-            'path_image': '/tmp/faro_alogeno_anabbagliante/faro_alogeno_anabbagliante_12volt_0incl_centrato_pellicola45/bri_64_contr_75_expabs_250.jpg',
-            'path_image_out': '/tmp/OUT2/CONTOUR_TROPPO_DISTANTE_faro_alogeno_anabbagliante__12volt_0incl_centrato_pellicola45__bri_64_contr_75_expabs_250.jpg'
-        })
-        lista_immagini.append({
-            'path_image': '/tmp/faro_alogeno_anabbagliante/faro_alogeno_anabbagliante_12volt_2incl_centrato_pellicola45/bri_32_contr_0_expabs_300.jpg',
-            'path_image_out': '/tmp/OUT2/CONTOUR_TROPPO_DISTANTE__faro_alogeno_anabbagliante_12volt_2incl_centrato_pellicola45__bri_32_contr_0_expabs_300.jpg'
-        })
-        lista_immagini.append({
-            'path_image': '/tmp/faro_alogeno_anabbagliante/faro_alogeno_anabbagliante_12volt_2incl_centrato_pellicola45/bri_64_contr_0_expabs_300.jpg',
-            'path_image_out': '/tmp/OUT2/PUNTI_ERRATI__faro_alogeno_anabbagliante_12volt_2incl_centrato_pellicola45__bri_64_contr_0_expabs_300.jpg'
-        })
-        lista_immagini.append({
-            'path_image': '/tmp/faro_alogeno_anabbagliante/faro_alogeno_anabbagliante_12volt_2incl_centrato_pellicola45/bri_-64_contr_100_expabs_2000.jpg',
-            'path_image_out': '/tmp/OUT2/NESSUN_PUNTO_TROVATO__faro_alogeno_anabbagliante_12volt_2incl_centrato_pellicola45__bri_-64_contr_100_expabs_2000.jpg'
-        })
-
-    # Analizza le immagini -----------------------------------------------------
-
-    for c, immagine in enumerate(lista_immagini):
-        path_image = immagine['path_image']
-        print(f"*** [{c}] Processando {path_image} ...")
-
-        image_input = cv2.imread(path_image, cv2.IMREAD_GRAYSCALE)
-        if image_input is None:
-            print(f"*** [{c}] Immagine {path_image} non trovata")
-            continue
-        image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-
-        #image_output, err = rileva_punto_angoloso(image_input, image_output)
-        image_output,err=trova_contrni_abbagliante(image_input)
-        assert image_output is not None
-
-        if err is not None:
-            cv2.putText(image_output, err, (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, WHITE, 1)
-
-        path_image_out = immagine['path_image_out']
-        os.makedirs(os.path.dirname(path_image_out), exist_ok=True)
-        cv2.imwrite(path_image_out, image_output)
 
