@@ -150,9 +150,9 @@ def trova_contrni_abbagliante(image_input):
 
     imout= cv2.warpPerspective(imout, MCORR, (imout.shape[1],imout.shape[0]))
 
-
+    cv2.fastNlMeansDenoising(imout, imout, 1000)
     cv2.normalize(imout,imout,0,255,cv2.NORM_MINMAX)
-    cv2.fastNlMeansDenoising(imout,imout,1000)
+
 
     imout1=imout.copy()
     #imout2=imout.copy()
@@ -187,6 +187,14 @@ def trova_contrni_abbagliante(image_input):
         print('err')
 
     return imout, None
+
+
+def lum_zones(img_input,x,y,r):
+    img=img_input.copy()*0
+    cv2.circle(img,[x,y],r,[1,1,1],-1)
+    img=img*img_input
+    l=np.mean(img[img>0])
+    return img,l
 
 
 def correzione_prospettiva(img):
