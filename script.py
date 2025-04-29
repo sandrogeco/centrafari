@@ -7,6 +7,11 @@ from PIL import ImageTk
 import numpy as np
 import time
 import socket
+import threading
+from queue import Queue
+
+#from MW28912_originale import end_col
+
 
 ############################################################################################
 
@@ -166,7 +171,7 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
     # Rileva contorno
     contour, err = rileva_contorno_1(image_input, cache)
     if contour is None or err is not None:
-        return image_input, '[rileva_punto_angoloso] contour is None'
+        return image_input, None,'[rileva_punto_angoloso] contour is None'
 
     # Analisi contorno
     cv2.drawContours(image_output, [contour], -1, RED, 1)
@@ -213,7 +218,7 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
     punti = [p for p in punti if min_contour_x + (0.05 * range_contour_x) < p[0] < max_contour_x - (0.05 * range_contour_x)]
 
     if len(punti) == 0:
-        return image_output, '[rileva_punto_angoloso] nessun punto trovato'
+        return image_output,None, '[rileva_punto_angoloso] nessun punto trovato'
 
     for punto in punti:
         cv2.circle(image_output, punto, 2, GREEN, -1)
@@ -221,7 +226,12 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
     punto_finale = tuple(np.median(punti, axis=0).astype(np.int32))
     cv2.circle(image_output, punto_finale, 6, GREEN, -1)
 
-    return image_output, None
+    return image_output, punto_finale,None
+
+
+def visualizza_croce_riferimento(frame,x,y,width,heigth):
+    disegna_croce(frame,(x-width/2,y-heigth/2),1000,1,'green')
+    disegna_croce(frame, (x + width / 2, y + heigth / 2),1000, 1, 'green')
 
 ############################################################################################
 
@@ -229,6 +239,13 @@ WINDOW_SHIFT_X = 278
 WINDOW_SHIFT_Y = 130
 WINDOW_WIDTH = 630
 WINDOW_HEIGHT = 320
+IP='127.0.0.1'
+PORT=28500
+
+q = Queue()
+
+
+
 
 MCORR=np.array([[1.19962087e+00, 3.03070135e-01, -6.59806746e+01],
            [5.05979992e-03, 1.64790684e+00, -7.66065165e+01],
@@ -243,7 +260,13 @@ def show_frame(video, cache, lmain):
     image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
     # image_input = preprocess(image_input)
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-    image_output, err = rileva_punto_angoloso(image_input, image_output, cache)
+    image_output,point, err = rileva_punto_angoloso(image_input, image_output, cache)
+    if point:
+        q.put({
+            'posiz_pattern_x': point[0],
+            'posiz_pattern_y': point[1],
+            'lux': 0})
+
 
     disegna_rettangolo(image_output, (320-20, 220-20), (320+20, 220+20), 2, 'red')
     visualizza_croce_riferimento(image_output,300,150,50,70)
@@ -258,6 +281,7 @@ def show_frame(video, cache, lmain):
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
     lmain.after(50, lambda: show_frame(video, cache, lmain))
+
 
 def set_camera(i,type='anabbagliante'):
     video_device='/dev/video'+str(i)
@@ -283,36 +307,59 @@ def set_camera(i,type='anabbagliante'):
         print(e)
 
 
-def visualizza_croce_riferimento(frame,x,y,width,heigth):
-    disegna_croce(frame,(x-width/2,y-heigth/2),1000,1,'green')
-    disegna_croce(frame, (x + width / 2, y + heigth / 2),1000, 1, 'green')
+def init_com():
+    while True:
+        try:
+            client_socket = socket.socket()
+            client_socket.bind((IP, PORT))
+            client_socket.listen(1)
+            print(f"[+] In ascolto su {IP}:{PORT}...")
+            conn, addr = client_socket.accept()
+            print(f"[+] Connessione da {addr}")
 
-def comunication(ip,port):
-    client_socket = socket.socket()
-    client_socket.connect((ip, port))
+            t = threading.Thread(target=comunication,args=(conn,), daemon=True).start()
+            while True:
+                data = conn.recv(1024).decode("UTF-8")
+                with open("/tmp/all_msgs.txt", "a") as f:
+                    f.write("[RX] " + data + "\n")
+            conn.close()
+            client_socket.close()
+            t.stop()
+        except:
+            pass
 
-    # if request_start_config == 1:
-    #
-    #     if flag_NO_telecamera == 1:
-    #         msg = "NO_telecamera"
-    #     else:
-    #         msg = "start_cfg %s " % SCRIPT_VERSION
-    #
-    # else:
-    #     msg = "XYL %d %d %f " % (posiz_pattern_x, posiz_pattern_y, lux_25m)
-    #
-    # with open("/tmp/all_msgs.txt", "a") as f:
-    #     f.write("[TX] " + msg + "\n")
-    # with open("/tmp/last_msg.txt", "w") as f:
-    #     f.write(msg)
-    #
-    # client_socket.send(msg.encode())  # send message
-    # replica_da_Proteus = client_socket.recv(1024).decode("UTF-8")
+
+
+def comunication(conn):
+    while True:
+        p=q.get()
+        #client_socket.connect((IP, PORT))
+        msg = "XYL %d %d %f " % (p['posiz_pattern_x'], p['posiz_pattern_y'], p['lux'])
+
+        with open("/tmp/all_msgs.txt", "a") as f:
+             f.write("[TX] " + msg + "\n")
+        try:
+
+            conn.sendall(msg.encode())  # send message
+            #replica_da_Proteus = client_socket.recv(1024).decode("UTF-8")
+        except:
+            pass
+          #  replica_da_Proteus="no risposta da proteus"
+
+
+
+       # client_socket.close()
+
+
+
 
 
 
 
 if __name__ == "__main__":
+    threading.Thread(target=init_com).start()
+
+
     print("nuovo_script")
     type=sys.argv[1].lower()
     # Apri la telecamera
@@ -321,6 +368,9 @@ if __name__ == "__main__":
         video = cv2.VideoCapture(i)
         if video.isOpened():
             break
+
+
+
 
 
 
@@ -336,3 +386,4 @@ if __name__ == "__main__":
 
     show_frame(video, cache, lmain)
     root.mainloop()
+
