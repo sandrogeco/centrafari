@@ -72,7 +72,10 @@ def rileva_contorno_1(image):
         return None, '[rileva_contorno_1], contours vuoto'
 
     # return max(contours, key=cv2.contourArea), None
-    return max(contours, key=lambda d: cv2.arcLength(d, False)), None
+    r=max(contours, key=lambda d: cv2.arcLength(d, False))
+    yc = np.mean([c[0][1] for c in r])
+    rr = [rx for rx in r if rx[0][1] < yc]
+    return rr,None
 
 def rileva_punto_angoloso(image_input, image_output):
     WIDTH_PIXEL = image_input.shape[1]
@@ -108,7 +111,8 @@ def rileva_punto_angoloso(image_input, image_output):
 
         angolo = -angolo_esterno_vettori(differenza_vettori(v_prec, v), differenza_vettori(v_succ, v))
         #secondo me c'è un errore
-        v_prec_verso_alto = angolo_vettori((1, 0), differenza_vettori(v_prec, v)) > 0
+      #  v_prec_verso_alto = (angolo_vettori((1, 0), differenza_vettori(v_prec, v)) > 0)
+        v_prec_verso_alto= (differenza_vettori(v_prec,v)[0]<0) and (differenza_vettori(v_prec,v)[1]>0)
 
         if angolo > 0 and 5 < angolo < 20 and v_prec_verso_alto:
             punti.append(v)
