@@ -1,7 +1,7 @@
 import socket
 import threading
 
-def thread_comunicazione(ip,port, queue):
+def thread_comunicazione(ip,port,queue,resp):
     while True:
         try:
             p = queue.get(timeout=0.5)
@@ -13,6 +13,7 @@ def thread_comunicazione(ip,port, queue):
             conn.connect((ip, port))
             conn.sendall(msg.encode())  # send message
             data = conn.recv(1024).decode("UTF-8")
+            resp= data.lstrip()
         except:
             data=""
             pass
