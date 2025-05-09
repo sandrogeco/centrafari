@@ -10,6 +10,7 @@
     "exposure_absolute": 400,
 
     "port": 28500,
+    "ip": "192.168.25.111",
 
     "matrice_correzione_prospettiva": [
         [1.19962087e+00, 3.03070135e-01, -6.59806746e+01],

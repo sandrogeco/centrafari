@@ -13,7 +13,8 @@ import numpy as np
 from utils import disegna_rettangolo
 from funcs import rileva_punto_angoloso, visualizza_croce_riferimento
 from camera import set_camera
-from comms import avvia_comunicazione
+from comms import thread_comunicazione
+import os
 
 
 def show_frame(video, cache, lmain):
@@ -26,7 +27,7 @@ def show_frame(video, cache, lmain):
     # image_input = preprocess(image_input)
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
-
+    print(point)
     if point:
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
 
@@ -46,15 +47,18 @@ def show_frame(video, cache, lmain):
 
 
 if __name__ == "__main__":
+
+    os.chdir("/home/pi/Applications/")
     tipo_faro = sys.argv[1].lower()
 
     # Carica la configurazione
     with open(f"config_{tipo_faro}.json", "r") as f:
         config = json.load(f)
-
     q: Queue = Queue()
 
-    threading.Thread(target=partial(avvia_comunicazione, 'localhost', config['port'], q)).start()
+    #avvia_comunicazione(config['ip'], config['port'], q)
+    threading.Thread(target=partial(thread_comunicazione, config['ip'], config['port'], q),daemon=True,name="com_in").start()
+
 
     # Apri la telecamera
     for i in range(11):
