@@ -1,10 +1,11 @@
 import socket
 import threading
+import time
 
-def thread_comunicazione(ip,port,queue,resp):
+def thread_comunicazione(ip,port,cache):
     while True:
         try:
-            p = queue.get(timeout=0.5)
+            p = cache['queue'].get()
             msg = "XYL "+str(p['posiz_pattern_x'])+" "+str(p['posiz_pattern_y'])+" "+str(p['lux'])+" "
         except:
             msg="no news"
@@ -13,7 +14,7 @@ def thread_comunicazione(ip,port,queue,resp):
             conn.connect((ip, port))
             conn.sendall(msg.encode())  # send message
             data = conn.recv(1024).decode("UTF-8")
-            resp= data.lstrip()
+            cache['resp']= data.lstrip()
         except:
             data=""
             pass
@@ -22,3 +23,4 @@ def thread_comunicazione(ip,port,queue,resp):
         with open("/tmp/all_msgs.txt", "a") as f:
             f.write("[TX] " + msg + "\n")
             f.write("[RX] " + data + "\n")
+       # time.sleep(0.5)

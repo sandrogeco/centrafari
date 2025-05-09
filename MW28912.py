@@ -16,19 +16,19 @@ from camera import set_camera
 from comms import thread_comunicazione
 import os
 
+cmd_da_proteus={
+    'croce':"croce_OFF"
+}
+
 def decode_cmd(resp):
-    cmd_da_proteus = {
-        'croce': "croce_ON",
-        'pattern': "pattern_digital",
-        'inclinazione': 0
-    }
+
     if ((resp == 'croce_ON') or (resp == 'croce_OFF')):
         cmd_da_proteus['croce'] = resp
-
     return cmd_da_proteus
 
 
 def show_frame(video, cache, lmain):
+
     _, image_input = video.read()
 
     image_input= cv2.warpPerspective(image_input, cache['matrice_correzione_prospettiva'], (image_input.shape[1], image_input.shape[0]))
@@ -38,25 +38,31 @@ def show_frame(video, cache, lmain):
     # image_input = preprocess(image_input)
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
-    print(point)
+
+
+    decode_cmd(cache['resp'])
+    if cmd_da_proteus['croce'] == "croce_ON":
+        print('croce_on')
+        visualizza_croce_riferimento(image_output, 300, 150, 50, 70)
+
     if point:
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
-    cmd=decode_cmd(cache['resp'])
+    else:
+        cache['queue'].put(None)
+
 
     disegna_rettangolo(image_output, (320-20, 220-20), (320+20, 220+20), 2, 'red')
-    if cmd['croce'] == 'croce_ON':
-        visualizza_croce_riferimento(image_output,300,150,50,70)
 
     t1 = time.monotonic()
 
-    print(f"Durata elaborazione: {1000 * (t1 - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}")
+   # print(f"Durata elaborazione: {1000 * (t1 - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}")
     cache['t0'] = t0
 
     img = PIL.Image.fromarray(image_output)
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
-    lmain.after(50, lambda: show_frame(video, cache, lmain))
+    lmain.after(10, lambda: show_frame(video, cache, lmain))
 
 
 if __name__ == "__main__":
@@ -67,14 +73,18 @@ if __name__ == "__main__":
     # Carica la configurazione
     with open(f"config_{tipo_faro}.json", "r") as f:
         config = json.load(f)
-    q: Queue = Queue()
-    resp=""
+  #  q: Queue = Queue()
+    cache = {
+        'matrice_correzione_prospettiva': np.array(config['matrice_correzione_prospettiva']),
+        'queue': Queue(),
+        'resp': "",
+    }
 
-    threading.Thread(target=partial(thread_comunicazione, config['ip'], config['port'], q,resp),daemon=True,name="com_in").start()
+    threading.Thread(target=partial(thread_comunicazione, config['ip'], config['port'], cache),daemon=True,name="com_in").start()
 
     # Apri la telecamera
     for i in range(11):
-        set_camera(i, tipo_faro)
+        set_camera(i, config)
         video = cv2.VideoCapture(i)
         if video.isOpened():
             break
@@ -87,11 +97,7 @@ if __name__ == "__main__":
     lmain = tk.Label(root)
     lmain.pack()
 
-    cache = {
-        'matrice_correzione_prospettiva': np.array(config['matrice_correzione_prospettiva']),
-        'queue': q,
-        'resp':resp,
-    }
+
 
     show_frame(video, cache, lmain)
     root.mainloop()
