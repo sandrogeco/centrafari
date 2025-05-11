@@ -13,18 +13,8 @@ import numpy as np
 from utils import disegna_rettangolo
 from funcs import rileva_punto_angoloso, visualizza_croce_riferimento
 from camera import set_camera
-from comms import thread_comunicazione
+from comms import thread_comunicazione,cmd_da_proteus
 import os
-
-cmd_da_proteus={
-    'croce':"croce_OFF"
-}
-
-def decode_cmd(resp):
-
-    if ((resp == 'croce_ON') or (resp == 'croce_OFF')):
-        cmd_da_proteus['croce'] = resp
-    return cmd_da_proteus
 
 
 def show_frame(video, cache, lmain):
@@ -39,19 +29,19 @@ def show_frame(video, cache, lmain):
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
 
-
-    decode_cmd(cache['resp'])
+#    decode_cmd(cache['resp'])
+    print(cmd_da_proteus)
     if cmd_da_proteus['croce'] == "croce_ON":
-        print('croce_on')
-        visualizza_croce_riferimento(image_output, 300, 150, 50, 70)
+        visualizza_croce_riferimento(image_output, 315, 160+cmd_da_proteus['inclinazione'], cmd_da_proteus['toh'], cmd_da_proteus['toh'])
 
     if point:
+     #   disegna_rettangolo(image_output, (point[0] - 20, point[1] - 20), (point[0] + 20, point[1] + 20), 2, 'red')
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
     else:
         cache['queue'].put(None)
 
 
-    disegna_rettangolo(image_output, (320-20, 220-20), (320+20, 220+20), 2, 'red')
+
 
     t1 = time.monotonic()
 
@@ -66,8 +56,10 @@ def show_frame(video, cache, lmain):
 
 
 if __name__ == "__main__":
-
-    os.chdir("/home/pi/Applications/")
+    try:
+        os.chdir("/home/pi/Applications/")
+    except:
+        pass
     tipo_faro = sys.argv[1].lower()
 
     # Carica la configurazione
@@ -82,6 +74,8 @@ if __name__ == "__main__":
 
     threading.Thread(target=partial(thread_comunicazione, config['ip'], config['port'], cache),daemon=True,name="com_in").start()
 
+    #while True:
+        #time.sleep(1)
     # Apri la telecamera
     for i in range(11):
         set_camera(i, config)
