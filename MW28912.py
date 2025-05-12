@@ -8,7 +8,6 @@ import threading
 from queue import Queue
 from functools import partial
 import json
-import numpy as np
 
 from funcs import rileva_punto_angoloso, visualizza_croce_riferimento
 from camera import set_camera, apri_camera
@@ -21,7 +20,6 @@ def show_frame(video, cache, lmain):
 
     _, image_input = video.read()
 
-    image_input= cv2.warpPerspective(image_input, cache['matrice_correzione_prospettiva'], (image_input.shape[1], image_input.shape[0]))
     image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
     # image_input = preprocess(image_input)
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
@@ -59,7 +57,6 @@ if __name__ == "__main__":
         config = json.load(f)
 
     cache = {
-        'matrice_correzione_prospettiva': np.array(config['matrice_correzione_prospettiva']),
         'queue': Queue(),
         'resp': "",
     }
