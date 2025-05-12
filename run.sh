@@ -1,63 +1,81 @@
 #!/bin/bash
 
-#set -euo pipefail
+set -euo pipefail
 
 # shellcheck disable=SC2087
 
-# Script per trasferire il file MW28912.py sul P10 target (tramite ssh) e
-# avviarlo direttamente.
-
 display_usage() {
     echo "Utilizzo:"
-    echo "$0 <target_ip> <kill | send | run | send_run | help> <ABBAGLIANTE | ANABBAGLIANTE | FENDINEBBIA>"
-}
-
-resetta_fotocamera() {
-    ssh "pi@$TARGET_IP" <<EOF
-        # Setup iniziale per la telecamera
-        video_device="\$(find /dev -iname 'video*' | sort | head -n1)"
-        echo "video_device: \$video_device"
-
-        v4l2-ctl --device "\$video_device" --list-ctrls
-
-        v4l2-ctl --device "\$video_device" --set-ctrl=exposure_auto=1
-        v4l2-ctl --device "\$video_device" --set-ctrl=brightness=0
-        v4l2-ctl --device "\$video_device" --set-ctrl=contrast=100
-        v4l2-ctl --device "\$video_device" --set-ctrl=saturation=0
-        v4l2-ctl --device "\$video_device" --set-ctrl=exposure_absolute=1000
-
-        v4l2-ctl --device "\$video_device" --list-ctrls
-EOF
+    echo "$0 TARGET_IP=192.168.25.2 [TIPO_FARO=<ABBAGLIANTE | ANABBAGLIANTE | FENDINEBBIA>] <kill | send | run>"
 }
 
 kill_script() {
     # Chiudi tutti i programmi aperti
+    echo "*** kill_script"
+
     # shellcheck disable=SC2087
-    ssh "pi@$TARGET_IP" >/dev/null 2>&1 <<EOF
-        echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_PATH"
-        echo 1234 | sudo -S killall -9 MW28912 || true
-        echo 1234 | sudo -S kill -15 -f "emulatore_proteus.py"
+    ssh "pi@$TARGET_IP" <<EOF
+        echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912.py" || true
+        echo 1234 | sudo -S pkill -9 MW28912 || true
+        echo 1234 | sudo -S pkill -15 "emulatore_proteus.py" || true
 EOF
 }
 
 send_script() {
     # Trasferisci lo script e l'emulatore del server sul P10 target
-    {
-      #  scp "script.py" pi@"$TARGET_IP":"$TARGET_DESTINATION_PATH"
-        scp * pi@"$TARGET_IP":"$TARGET_DESTINATION_DIR"
+    echo "*** send_script"
+
+    touch /tmp/checksum_file_centrafari.txt
+
+    for file in \
+        MW28912.py \
+        camera.py \
+        comms.py \
+        funcs.py \
+        utils.py \
+        config_anabbagliante.json \
+        config_abbagliante.json \
+        ; do
+        # Trasferisci solo i file effettivamente cambiati
+        if ! grep -q "$(md5sum "$file" | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
+            scp $file pi@"$TARGET_IP":"$TARGET_DESTINATION_FOLDER"
+        else
+            echo "Skip send $file to $TARGET_IP"
+        fi
+    done
+
+    if ! grep -q "$(md5sum emulatore_proteus.py | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
         scp "emulatore_proteus.py" pi@"$TARGET_IP":"/tmp/emulatore_proteus.py"
-    } >/dev/null
+    fi
+
+    # Salva i checksum dei file trasferiti
+    md5sum \
+        MW28912.py \
+        camera.py \
+        comms.py \
+        funcs.py \
+        utils.py \
+        config_anabbagliante.json \
+        config_abbagliante.json \
+        emulatore_proteus.py \
+        >/tmp/checksum_file_centrafari.txt
 }
 
 run_script() {
     # Avvia gli script
+    echo "*** run_script"
+
     # shellcheck disable=SC2087
     ssh "pi@$TARGET_IP" <<EOF
         echo -e "\n\n\n\n"
         sleep 1
-        # Avvia lo script della telecamera
-        DISPLAY=:0 nice -n 10 python3 "$TARGET_DESTINATION_PATH" "$TIPO_FARO"
 
+        echo 1234 | sudo -S rm -f /tmp/all_msgs.txt
+
+        # Avvia lo script della telecamera
+        set -x
+        DISPLAY=:0 nice -n 0 python3 $PROFILE_ARGS "$TARGET_DESTINATION_FOLDER/MW28912.py" "$TIPO_FARO"
+        set +x
 EOF
 }
 
@@ -69,42 +87,47 @@ ROOT_DIR="$(
 )"
 cd "$ROOT_DIR"
 
-# Controllo iniziale degli argomenti
-if (($# < 3)); then
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     display_usage
+    exit 0
 fi
 
-TARGET_IP="$1"
-ACTION="$2"
-TIPO_FARO="$3"
+TARGET_DESTINATION_FOLDER="/home/pi/Applications"
+PROFILE_ARGS=""
 
-#TARGET_DESTINATION_PATH="/tmp/script.py"
-TARGET_DESTINATION_PATH="/home/pi/Applications/MW28912.py"
-TARGET_DESTINATION_DIR="/home/pi/Applications/"
+for arg in "$@"; do
+    case "$arg" in
+    # Impostazione parametri
+    "TARGET_IP="*)
+        TARGET_IP="${arg#*=}"
+        ;;
+    "TIPO_FARO="*)
+        TIPO_FARO="${arg#*=}"
+        ;;
+    "TARGET_DESTINATION_FOLDER="*)
+        TARGET_DESTINATION_FOLDER="${arg#*=}"
+        ;;
+    "PROFILE_SCRIPT=y" | "PROFILE_SCRIPT=n")
+        if [ "$arg" = "PROFILE_SCRIPT=y" ]; then
+            PROFILE_ARGS="-m cProfile -o /tmp/MW28912.prof"
+        fi
+        ;;
 
-case "$ACTION" in
-"kill")
-    kill_script
-    ;;
-"send")
-    send_script
-    ;;
-"run")
-    kill_script
- #   resetta_fotocamera
-    run_script
-    ;;
-"send_run")
-    kill_script
-    send_script
-  #  resetta_fotocamera
-    run_script
-    ;;
-"help")
-    display_usage
-    ;;
-*)
-    display_usage
-    exit 1
-    ;;
-esac
+    # Azioni
+    "kill")
+        kill_script
+        ;;
+    "send")
+        send_script
+        ;;
+    "run")
+        kill_script
+        run_script
+        ;;
+
+    *)
+        display_usage
+        exit 1
+        ;;
+    esac
+done

@@ -1,6 +1,4 @@
 import socket
-import threading
-import time
 
 cmd_da_proteus={
     'croce':"croce_OFF",
@@ -23,7 +21,7 @@ def decode_cmd(resp):
     return cmd_da_proteus
 
 
-def thread_comunicazione(ip,port,cache):
+def thread_comunicazione(ip, port, cache):
     first_run=True
     while True:
         if first_run:
