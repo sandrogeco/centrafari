@@ -13,6 +13,8 @@
     "saturation": 0,
     "exposure_absolute": 400,
 
+    "numero_medie_punto": 5,
+
     "port": 28500,
     "ip": "192.168.25.111"
 }

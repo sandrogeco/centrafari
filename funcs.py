@@ -108,6 +108,12 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
         cv2.circle(image_output, punto, 2, get_colore_bgr('green'), -1)
 
     punto_finale = tuple(np.median(punti, axis=0).astype(np.int32))
+
+    if 'numero_medie_punto' in cache['config']:
+        cache['lista_ultimi_punti'] = cache.get('lista_ultimi_punti', []) + [punto_finale]
+        cache['lista_ultimi_punti'] = cache['lista_ultimi_punti'][-cache['config']['numero_medie_punto']:]
+        punto_finale = tuple(np.median(cache['lista_ultimi_punti'], axis=0).astype(np.int32))
+
     cv2.circle(image_output, punto_finale, 6, get_colore_bgr('green'), -1)
 
     return image_output, punto_finale,None
