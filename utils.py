@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import subprocess
+
 
 def get_colore(colore: str):
     if colore == "red":
@@ -110,3 +112,5 @@ def angolo_esterno_vettori(v1, v2):
     return angolo_vettori(differenza_vettori((0, 0), v1), v2)
 
 
+def uccidi_processo(cmd):
+    subprocess.Popen(f"echo 1234 | sudo -S pkill -15 -f '{cmd}'", shell=True)

@@ -8,17 +8,25 @@ import threading
 from queue import Queue
 from functools import partial
 import json
+import os
+import subprocess
+import atexit
+import signal
 
 from funcs import rileva_punto_angoloso, visualizza_croce_riferimento
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione, cmd_da_proteus
-import os
+from utils import uccidi_processo
 
 
 def show_frame(video, cache, lmain):
     t0 = time.monotonic()
 
-    _, image_input = video.read()
+    image_input = cv2.imread("/tmp/frame.jpg")
+
+    if image_input is None:
+        lmain.after(10, lambda: show_frame(video, cache, lmain))
+        return
 
     image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
     # image_input = preprocess(image_input)
@@ -42,10 +50,20 @@ def show_frame(video, cache, lmain):
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
-    lmain.after(10, lambda: show_frame(video, cache, lmain))
+    lmain.after(5, lambda: show_frame(video, cache, lmain))
+
+
+def cleanup(p):
+    print("cleanup")
+    try:
+        os.killpg(p.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
 
 
 if __name__ == "__main__":
+    uccidi_processo("usb_video_capture_cm4")
+
     try:
         os.chdir("/home/pi/Applications/")
     except:
@@ -65,10 +83,30 @@ if __name__ == "__main__":
 
     # Imposta la telecamera
     indice_camera, video = apri_camera()
-    if indice_camera is None:
-     print("Nessuna telecamera trovata")
-     sys.exit(1)
+    if video is None:
+        print("Nessuna telecamera trovata")
+        sys.exit(1)
+    video.release()
     set_camera(indice_camera, config)
+
+    # Avvia la cattura delle immagini
+    time.sleep(1)
+    process_video_capture = subprocess.Popen(
+        "/home/pi/Applications/usb_video_capture_cm4 -c 10000000 &",
+        shell=True,
+        preexec_fn=os.setsid,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+    atexit.register(partial(cleanup, process_video_capture))
+
+    def _sig_handler(signum, frame):
+        cleanup(process_video_capture)
+        sys.exit(0)
+
+    for s in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(s, _sig_handler)
 
     # Imposta la finestra
     root = tk.Tk()

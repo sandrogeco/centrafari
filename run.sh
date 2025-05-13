@@ -18,6 +18,7 @@ kill_script() {
         echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912.py" || true
         echo 1234 | sudo -S pkill -9 MW28912 || true
         echo 1234 | sudo -S pkill -15 "emulatore_proteus.py" || true
+        echo 1234 | sudo -S pkill -15 "usb_video_capture_cm4" || true
 EOF
 }
 
@@ -35,6 +36,7 @@ send_script() {
         utils.py \
         config_anabbagliante.json \
         config_abbagliante.json \
+        assets/usb_video_capture_cm4 \
         ; do
         # Trasferisci solo i file effettivamente cambiati
         if ! grep -q "$(md5sum "$file" | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
@@ -58,6 +60,7 @@ send_script() {
         config_anabbagliante.json \
         config_abbagliante.json \
         emulatore_proteus.py \
+        assets/usb_video_capture_cm4 \
         >/tmp/checksum_file_centrafari.txt
 }
 
