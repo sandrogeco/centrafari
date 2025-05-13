@@ -91,8 +91,24 @@ def disegna_rettangolo(frame, punto_ll, punto_ur, spessore, colore):
 
 def find_y_by_x(contour, x):
     c = contour[:, 0, :]
-    nearest_point = min(c, key=lambda p: abs(p[0] - x))
-    return nearest_point[1]
+    min_distanza = 999
+    prec_distanza = 999
+    min_p = None
+
+    for p in c:
+        distanza = abs(p[0] - x)
+
+        if distanza < min_distanza:
+            min_distanza = distanza
+            min_p = p
+
+        if distanza > prec_distanza:
+            break
+
+        prec_distanza = distanza
+
+    return min_p[1]
+
 
 def somma_vettori(v1, v2):
     return (v1[0] + v2[0], v1[1] + v2[1])
