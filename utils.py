@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import subprocess
+import bisect
 
 
 def get_colore(colore: str):
@@ -91,23 +92,15 @@ def disegna_rettangolo(frame, punto_ll, punto_ur, spessore, colore):
 
 def find_y_by_x(contour, x):
     c = contour[:, 0, :]
-    min_distanza = 999
-    prec_distanza = 999
-    min_p = None
+    pos = bisect.bisect_left(c[:, 0], x)
 
-    for p in c:
-        distanza = abs(p[0] - x)
-
-        if distanza < min_distanza:
-            min_distanza = distanza
-            min_p = p
-
-        if distanza > prec_distanza:
-            break
-
-        prec_distanza = distanza
-
-    return min_p[1]
+    if pos == 0:
+        return c[0][1]
+    elif pos == len(c):
+        return c[-1][1]
+    else:
+        before, after = c[pos - 1], c[pos]
+        return after[1] if (after[0] - x) < (x - before[0]) else before[1]
 
 
 def somma_vettori(v1, v2):
