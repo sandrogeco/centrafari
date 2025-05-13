@@ -3,15 +3,21 @@ import cv2
 
 from utils import get_colore_bgr, angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, disegna_croce
 
-def preprocess(image):
+def preprocess(image, cache):
+    config = cache['config']
+
+    if 'crop_w' not in config or 'crop_h' not in config:
+        return image
+
     height, width = image.shape[:2]
 
     # Ritaglia immagine
-    CROP_W = 500
-    CROP_H = 200
-    image = image[int(height/2 - CROP_H/2):int(height/2 + CROP_H/2), int(width/2 - CROP_W/2):int(width/2 + CROP_W/2)]
+    crop_w = config['crop_w']
+    crop_h = config['crop_h']
+    image = image[int(height/2 - crop_h/2):int(height/2 + crop_h/2), int(width/2 - crop_w/2):int(width/2 + crop_w/2)]
 
-    image = cv2.resize(image, (0, 0), fx=1, fy=2)
+    # Stira immagine
+    image = cv2.resize(image, (0, 0), fx=1.0 * config['width'] / config['crop_w'], fy=1.0 * config['height'] / config['crop_h'])
 
     return image
 

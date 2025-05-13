@@ -1,8 +1,12 @@
 {
+    "width": 630,
+    "height": 320,
+
     "window_shift_x": 278,
     "window_shift_y": 130,
-    "window_width": 630,
-    "window_height": 320,
+
+    "crop_w": 300,
+    "crop_h": 100,
 
     "brightness": 0,
     "contrast": 100,

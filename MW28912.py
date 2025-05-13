@@ -13,7 +13,7 @@ import subprocess
 import atexit
 import signal
 
-from funcs import rileva_punto_angoloso, visualizza_croce_riferimento
+from funcs import rileva_punto_angoloso, visualizza_croce_riferimento, preprocess
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione, cmd_da_proteus
 from utils import uccidi_processo
@@ -29,7 +29,8 @@ def show_frame(video, cache, lmain):
         return
 
     image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
-    # image_input = preprocess(image_input)
+    image_input = preprocess(image_input, cache)
+
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
 
@@ -75,6 +76,7 @@ if __name__ == "__main__":
         config = json.load(f)
 
     cache = {
+        'config': config,
         'queue': Queue(),
         'resp': "",
     }
@@ -111,7 +113,7 @@ if __name__ == "__main__":
     # Imposta la finestra
     root = tk.Tk()
     root.overrideredirect(True)
-    root.geometry(f"{config['window_width']}x{config['window_height']}+{config['window_shift_x']}+{config['window_shift_y']}")
+    root.geometry(f"{config['width']}x{config['height']}+{config['window_shift_x']}+{config['window_shift_y']}")
     root.resizable(False, False)
     lmain = tk.Label(root)
     lmain.pack()
