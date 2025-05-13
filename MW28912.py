@@ -20,7 +20,8 @@ from utils import uccidi_processo
 
 
 def show_frame(video, cache, lmain):
-    t0 = time.monotonic()
+    if cache['DEBUG']:
+        t0 = time.monotonic()
 
     image_input = cv2.imread("/tmp/frame.jpg")
 
@@ -41,11 +42,10 @@ def show_frame(video, cache, lmain):
 
     if point:
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
-    else:
-        cache['queue'].put(None)
 
-    print(f"Durata elaborazione: {1000 * (time.monotonic() - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}", flush=True)
-    cache['t0'] = t0
+    if cache['DEBUG']:
+        print(f"Durata elaborazione: {1000 * (time.monotonic() - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}", flush=True)
+        cache['t0'] = t0
 
     img = PIL.Image.fromarray(image_output)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -76,12 +76,13 @@ if __name__ == "__main__":
         config = json.load(f)
 
     cache = {
+        'DEBUG': True,
         'config': config,
         'queue': Queue(),
         'resp': "",
     }
 
-    threading.Thread(target=partial(thread_comunicazione, config['ip'], config['port'], cache), daemon=True, name="com_in").start()
+    threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
 
     # Imposta la telecamera
     indice_camera, video = apri_camera()

@@ -21,7 +21,7 @@ def decode_cmd(resp):
     return cmd_da_proteus
 
 
-def thread_comunicazione(ip, port, cache):
+def thread_comunicazione(port, cache):
     first_run=True
     while True:
         if first_run:
@@ -35,16 +35,17 @@ def thread_comunicazione(ip, port, cache):
                 msg="no news"
         try:
             conn = socket.socket()
-            conn.connect((ip, port))
+            conn.connect(("localhost", port))
             conn.sendall(msg.encode())  # send message
             data = conn.recv(1024).decode("UTF-8")
-            cache['resp']= data.lstrip()
+            cache['resp'] = data.lstrip()
             decode_cmd(cache['resp'])
         except:
-            data=""
+            data = ""
             pass
-        print("[TX] " + msg)
-        print("[RX] " + data + "\n")
+
+        print("[TX] " + msg, flush=True)
+        print("[RX] " + data + "\n", flush=True)
         with open("/tmp/all_msgs.txt", "w") as f:
             f.write("[TX] " + msg + "\n")
             f.write("[RX] " + data + "\n")

@@ -21,23 +21,20 @@ def preprocess(image, cache):
 
     return image
 
-def rileva_contorno_1(image, cache=None):
-    if cache is None:
-        cache = {}
-
-    def pullapart(v):
-        vs = 250
-        v = v - 2 * np.sign(v - vs) * (np.abs(v - vs) ** 0.6)
-        v = np.clip(v, 0, 255).astype(np.uint8)
-        return v
-
+def rileva_contorno(image, cache):
     if 'lut' not in cache:
+        def pullapart(v):
+            vs = 250
+            v = v - 2 * np.sign(v - vs) * (np.abs(v - vs) ** 0.6)
+            v = np.clip(v, 0, 255).astype(np.uint8)
+            return v
+
         cache['lut'] = np.array([pullapart(d) for d in range(256)], dtype=np.uint8)
 
     image1 = cv2.LUT(image, cache['lut'])
 
     # Sembra che THRESH_OTSU funzioni abbastanza meglio di THRESH_BINARY, cioe' il contorno che viene
-    # # fuori e' meno influenzato dalla haze nell'immagine e piu' vicino al bordo vero
+    # fuori e' meno influenzato dalla haze nell'immagine e piu' vicino al bordo vero
     _, binary_image = cv2.threshold(image1, 0, 255, cv2.THRESH_OTSU)
 
     edges = cv2.Canny(binary_image, 50, 150)
@@ -46,22 +43,24 @@ def rileva_contorno_1(image, cache=None):
         print("   contours vuoto")
         return None, '[rileva_contorno_1], contours vuoto'
 
-    # return max(contours, key=cv2.contourArea), None
     return max(contours, key=lambda d: cv2.arcLength(d, False)), None
 
 def rileva_punto_angoloso(image_input, image_output, cache=None):
     WIDTH_PIXEL = image_input.shape[1]
 
     # Rileva contorno
-    contour, err = rileva_contorno_1(image_input, cache)
+    contour, err = rileva_contorno(image_input, cache)
     if contour is None or err is not None:
         return image_input, None,'[rileva_punto_angoloso] contour is None'
 
     # Analisi contorno
-    cv2.drawContours(image_output, [contour], -1, get_colore_bgr('red'), 1)
+    if cache['DEBUG']:
+        cv2.drawContours(image_output, [contour], -1, get_colore_bgr('red'), 1)
 
     delta = 20
     punti = []
+
+    OFFSET_Y = 5
 
     for p in range(delta, 100 - delta, 1):
         p_prec = p - delta
@@ -77,8 +76,6 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
         if y_prec is None or y is None or y_succ is None:
             continue
 
-        OFFSET_Y = 5
-
         v_prec = (x_prec, y_prec + OFFSET_Y)
         v = (x, y + OFFSET_Y)
         v_succ = (x_succ, y_succ + OFFSET_Y)
@@ -87,9 +84,9 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
 
         v_prec_verso_alto = angolo_vettori((1, 0), differenza_vettori(v_prec, v)) > 0
 
-        if 5 < angolo < 20 and v_prec_verso_alto:
+        if 12 < angolo < 18 and v_prec_verso_alto:
             punti.append(v)
-            cv2.circle(image_output, v, 2, get_colore_bgr('green'), -1)
+            # cv2.circle(image_output, v, 2, get_colore_bgr('green'), -1)
             # Decommenta queste due o tre linee sotto per visualizzare i vettori che danno l'angolo e per scrivere l'angolo
             # cv2.line(image_output, v_prec, v, get_colore_bgr('green'), 1)
             # cv2.line(image_output, v, v_succ, get_colore_bgr('green'), 1)
@@ -102,7 +99,7 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
     punti = [p for p in punti if min_contour_x + (0.05 * range_contour_x) < p[0] < max_contour_x - (0.05 * range_contour_x)]
 
     if len(punti) == 0:
-        return image_output,None, '[rileva_punto_angoloso] nessun punto trovato'
+        return image_output, None, '[rileva_punto_angoloso] nessun punto trovato'
 
     for punto in punti:
         cv2.circle(image_output, punto, 2, get_colore_bgr('green'), -1)
@@ -114,12 +111,12 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
         cache['lista_ultimi_punti'] = cache['lista_ultimi_punti'][-cache['config']['numero_medie_punto']:]
         punto_finale = tuple(np.median(cache['lista_ultimi_punti'], axis=0).astype(np.int32))
 
-    cv2.circle(image_output, punto_finale, 6, get_colore_bgr('green'), -1)
+    cv2.circle(image_output, punto_finale, 10, get_colore_bgr('green'), -1)
 
-    return image_output, punto_finale,None
+    return image_output, punto_finale, None
 
 
-def visualizza_croce_riferimento(frame,x,y,width,heigth):
-    disegna_croce(frame,(x-width/2,y-heigth/2),1000,1,'green')
-    disegna_croce(frame, (x + width / 2, y + heigth / 2),1000, 1, 'green')
+def visualizza_croce_riferimento(frame, x, y, width, heigth):
+    disegna_croce(frame, (x - width / 2, y - heigth / 2), 1000, 1, 'green')
+    disegna_croce(frame, (x + width / 2, y + heigth / 2), 1000, 1, 'green')
 

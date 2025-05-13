@@ -25,8 +25,10 @@ def get_colore(colore: str):
         return (0, 0, 0)
     raise ValueError()
 
+
 def get_colore_bgr(colore: str):
     return get_colore(colore)[::-1]
+
 
 def controlla_colore_pixel(pixel, colore):
     colore_rgb = get_colore(colore)
@@ -73,8 +75,6 @@ def disegna_croci(frame, punti, larghezza, spessore, colore):
         disegna_croce(frame, punto, larghezza, spessore, colore)
 
 
-
-
 def disegna_linea(frame, punti, spessore, colore):
     for i in range(0, len(punti) - 1):
         disegna_segmento(frame, punti[i], punti[i + 1], spessore, colore)
@@ -89,6 +89,7 @@ def disegna_rettangolo(frame, punto_ll, punto_ur, spessore, colore):
     disegna_segmento(frame, (min_x, min_y), (min_x, max_y), spessore, colore)
     disegna_segmento(frame, (min_x, max_y), (max_x, max_y), spessore, colore)
     disegna_segmento(frame, (max_x, min_y), (max_x, max_y), spessore, colore)
+
 
 def find_y_by_x(contour, x):
     c = contour[:, 0, :]
@@ -106,8 +107,10 @@ def find_y_by_x(contour, x):
 def somma_vettori(v1, v2):
     return (v1[0] + v2[0], v1[1] + v2[1])
 
+
 def differenza_vettori(v1, v2):
     return (v1[0] - v2[0], v1[1] - v2[1])
+
 
 def angolo_vettori(v1, v2):
     x1, y1 = v1
@@ -116,6 +119,7 @@ def angolo_vettori(v1, v2):
     dot = x1 * x2 + y1 * y2
     det = x1 * y2 - y1 * x2
     return np.arctan2(det, dot) * 180 / np.pi
+
 
 def angolo_esterno_vettori(v1, v2):
     return angolo_vettori(differenza_vettori((0, 0), v1), v2)
