@@ -43,7 +43,9 @@ def rileva_contorno(image, cache):
         print("   contours vuoto")
         return None, '[rileva_contorno_1], contours vuoto'
 
-    return max(contours, key=lambda d: cv2.arcLength(d, False)), None
+    contour = max(contours, key=lambda d: cv2.arcLength(d, False))
+    contour = contour[contour[:, 0, 0].argsort()]
+    return contour, None
 
 def rileva_punto_angoloso(image_input, image_output, cache=None):
     WIDTH_PIXEL = image_input.shape[1]
