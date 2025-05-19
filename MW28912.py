@@ -12,6 +12,8 @@ import os
 import subprocess
 import atexit
 import signal
+from datetime import datetime
+import logging
 
 from funcs import rileva_punto_angoloso, visualizza_croce_riferimento, preprocess
 from camera import set_camera, apri_camera
@@ -44,7 +46,7 @@ def show_frame(video, cache, lmain):
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
 
     if cache['DEBUG']:
-        print(f"Durata elaborazione: {1000 * (time.monotonic() - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}", flush=True)
+        logging.debug(f"Durata elaborazione: {1000 * (time.monotonic() - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}")
         cache['t0'] = t0
 
     img = PIL.Image.fromarray(image_output)
@@ -55,7 +57,7 @@ def show_frame(video, cache, lmain):
 
 
 def cleanup(p):
-    print("cleanup")
+    logging.info("cleanup...")
     try:
         os.killpg(p.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -63,6 +65,17 @@ def cleanup(p):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s %(message)s',
+        handlers=[
+            logging.FileHandler(f"/tmp/MW28912py_log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"),
+            logging.StreamHandler()
+        ]
+    )
+
+    logging.info(f"Avvio MW28912.py {sys.argv}")
+
     uccidi_processo("usb_video_capture_cm4")
 
     try:
@@ -87,7 +100,7 @@ if __name__ == "__main__":
     # Imposta la telecamera
     indice_camera, video = apri_camera()
     if video is None:
-        print("Nessuna telecamera trovata")
+        logging.error("Nessuna telecamera trovata! Uscita")
         sys.exit(1)
     video.release()
     set_camera(indice_camera, config)

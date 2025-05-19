@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import logging
 
 from utils import get_colore_bgr, angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, disegna_croce
 
@@ -40,7 +41,7 @@ def rileva_contorno(image, cache):
     edges = cv2.Canny(binary_image, 50, 150)
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
-        print("   contours vuoto")
+        logging.debug("   contours vuoto")
         return None, '[rileva_contorno_1], contours vuoto'
 
     contour = max(contours, key=lambda d: cv2.arcLength(d, False))
