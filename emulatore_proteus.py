@@ -32,7 +32,7 @@ def data_to_bytes(payload: str) -> bytes:
 
 def send_response(client_socket, payload: str) -> None:
     """Invia un messaggio ad un client."""
-    print(f"<<<< TX {payload}", flush=True)
+    print(f"[emulatore] >>>> TX {payload}", flush=True)
     client_socket.sendall(data_to_bytes(payload))
 
 
@@ -49,130 +49,9 @@ def cleanup_socket(tcp_socket, *_):
 
 def config1(config):
     # Alcuni valori iniziali
-    config["tolV_df"] = 10
-    config["mm_panel_per_pixel_df"] = 0.1250
-    config["tolH_df"] = 10
-    config["Larghezza_filtro_gaussiano_df"] = 21
-    config["step_media"] = 1
+    config["tolV_df"] = 50
+    config["tolH_df"] = 50
 
-    # Valori presi dal file MW289_12.fis trovato sul NAS di Enrico
-    config["mm_panel_per_pixel_df"] = 0.308
-    config["Larghezza_filtro_gaussiano_df"] = 9
-    config["ty_A_translation_matrix_df"] = 70
-    config["tx_N_translation_matrix_df"] = -260
-    config["ty_N_translation_matrix_df"] = 30
-    config["tx_F_translation_matrix_df"] = -14
-    config["ty_F_translation_matrix_df"] = 27
-    config["start_row_df"] = 100
-    config["end_row_df"] = 300
-    config["start_col_df"] = 0
-    config["end_col_df"] = 629
-    config["numero_di_tacche_abbagl_offset_x_df"] = -7
-    config["numero_di_tacche_abbagl_offset_y_df"] = 7
-    config["lin_dem_anabb_offset_x_df"] = -170
-    config["lin_dem_anabb_offset_y_df"] = -40
-    config["lin_dem_anabb_coeff_angol_df"] = 0.112000
-    config["alfa_LPF"] = 0.150000
-
-
-def config2(config):
-    # CFG->00TOV010mpx0.308000inc0000TOH010GSF031TAX-0005TAY00050TNX-0005TNY00050TFX-0280TFY-0058CRI100CRF300CCI000CCF629tax-06tay012Lnx-0230Lny00010AtH000Lnm0.112000003alf0.00000ncl00lwn000dnv0bcn0mcb0stm000stc000AtV000
-    config["tipo_visualizzazione"] = 0
-    config["visualizza_croce"] = 0
-    config["tolV_df"] = 10
-    config["mm_panel_per_pixel_df"] = 0.308
-    config["inclinazione_in_pixels"] = 0
-    config["tolH_df"] = 10
-    config["Larghezza_filtro_gaussiano_df"] = 31
-    config["tx_A_translation_matrix_df"] = -5
-    config["ty_A_translation_matrix_df"] = 50
-    config["tx_N_translation_matrix_df"] = -5
-    config["ty_N_translation_matrix_df"] = 50
-    config["tx_F_translation_matrix_df"] = -280
-    config["ty_F_translation_matrix_df"] = -58
-    config["start_row_df"] = 100
-    config["end_row_df"] = 300
-    config["start_col_df"] = 0
-    config["end_col_df"] = 629
-    config["numero_di_tacche_abbagl_offset_x_df"] = -6
-    config["numero_di_tacche_abbagl_offset_y_df"] = 12
-    config["lin_dem_anabb_offset_x_df"] = -230
-    config["lin_dem_anabb_offset_y_df"] = 10
-    config["lux_su_lineaX_AtH"] = 0
-    config["lin_dem_anabb_coeff_angol_df"] = 0.112
-    config["alfa_LPF"] = 0
-    config["display_none_croci_linee_anabb"] = 0
-    config["len_window_y"] = 0
-    config["step_media"] = 1
-    config["step_contr"] = 0
-    config["lux_su_lineaY_AtH"] = 0
-
-def config3(config):
-
-    config["tipo_visualizzazione"] = 0
-    config["visualizza_croce"] = 0
-    config["tolV_df"] = 10
-    config["mm_panel_per_pixel_df"] = 0.308
-    config["inclinazione_in_pixels"] = 0
-    config["tolH_df"] = 10
-    config["Larghezza_filtro_gaussiano_df"] = 31
-    config["tx_A_translation_matrix_df"] = -5
-    config["ty_A_translation_matrix_df"] = 50
-
-    config["tx_N_translation_matrix_df"] = -325
-    config["ty_N_translation_matrix_df"] = -165
-
-    config["tx_F_translation_matrix_df"] = -280
-    config["ty_F_translation_matrix_df"] = -58
-    config["start_row_df"] = 0
-    config["end_row_df"] = 630
-    config["start_col_df"] = 0
-    config["end_col_df"] = 629
-    config["numero_di_tacche_abbagl_offset_x_df"] = -6
-    config["numero_di_tacche_abbagl_offset_y_df"] = 12
-    config["lin_dem_anabb_offset_x_df"] = -230
-    config["lin_dem_anabb_offset_y_df"] = 10
-    config["lux_su_lineaX_AtH"] = 0
-    config["lin_dem_anabb_coeff_angol_df"] = 0.112
-    config["alfa_LPF"] = 0
-    config["display_none_croci_linee_anabb"] = 0
-    config["len_window_y"] = 0
-    config["step_media"] = 1
-    config["step_contr"] = 0
-    config["lux_su_lineaY_AtH"] = 0
-
-def config4(config):
-    # CFG->00TOV010mpx0.308000inc0028TOH015GSF003TAX-0105TAY-0075TNX-0105TNY-0075TFX-0100TFY-0115CRI100CRF300CCI000CCF629tax000tay000Lnx00000Lny00000AtH204Lnm0.112000003alf0.90000ncl00lwn200dnv0bcn0mcb0stm001stc004AtV000
-    # Con inclinazione al -1%
-    config["tipo_visualizzazione"] = 0
-    config["visualizza_croce"] = 0
-    config["tolV_df"] = 10
-    config["mm_panel_per_pixel_df"] = 0.308
-    config["inclinazione_in_pixels"] = 28
-    config["tolH_df"] = 15
-    config["Larghezza_filtro_gaussiano_df"] = 3
-    config["tx_A_translation_matrix_df"] = -105
-    config["ty_A_translation_matrix_df"] = -75
-    config["tx_N_translation_matrix_df"] = -105
-    config["ty_N_translation_matrix_df"] = -75
-    config["tx_F_translation_matrix_df"] = -100
-    config["ty_F_translation_matrix_df"] = -115
-    config["start_row_df"] = 100
-    config["end_row_df"] = 300
-    config["start_col_df"] = 0
-    config["end_col_df"] = 629
-    config["numero_di_tacche_abbagl_offset_x_df"] = 0
-    config["numero_di_tacche_abbagl_offset_y_df"] = 0
-    config["lin_dem_anabb_offset_x_df"] = 0
-    config["lin_dem_anabb_offset_y_df"] = 0
-    config["lux_su_lineaX_AtH"] = 204
-    config["lin_dem_anabb_coeff_angol_df"] = 0.112
-    config["alfa_LPF"] = 0.9
-    config["display_none_croci_linee_anabb"] = 0
-    config["len_window_y"] = 200
-    config["step_media"] = 1
-    config["step_contr"] = 4
-    config["lux_su_lineaY_AtH"] = 0
 
 # ##############################################################################
 
@@ -266,33 +145,27 @@ if __name__ == "__main__":
 
     print(f"Avvio server emulatore_proteus.py {SERVER_ADDRESS}", flush=True)
 
-    config_sent = False
+    config1(config)
 
-    config4(config)
-    config_string = None
-    #config_string = "CFG->00TOV010mpx0.308000inc0028TOH015GSF003TAX-0105TAY-0035TNX-0105TNY-0133TFX-0100TFY-0115CRI100CRF300CCI000CCF629tax000tay000Lnx00000Lny00000AtH204Lnm0.112000003alf0.90000ncl00lwn200dnv0bcn0mcb0stm001stc004AtV000"
-    #connection, client = tcp_socket.accept()
     while True:
         try:
             connection, client = tcp_socket.accept()
 
             try:
                 data = list(connection.recv(128))
-                print(f"\n\n>>>> RX {prettify_packet(data)}", flush=True)
+                data_str = ''.join([chr(d) for d in data])
+                print(f"\n\n[emulatore] <<<< RX {prettify_packet(data)}", flush=True)
 
-                if not config_sent:
-                    if config_string is None:
-                        send_response(connection, genera_stringa_config(config))
-                    else:
-                        send_response(connection, config_string)
-                    config_sent = True
+                if data_str == "start_cfg":
+                    send_response(connection, genera_stringa_config(config))
                 else:
-                    send_response(connection, "CIAO")
+                    send_response(connection, "croce_OFF")
             finally:
                 time.sleep(1)
 
         except Exception as e:
             print(e, flush=True)
             break
+
     connection.close()
     cleanup_socket(tcp_socket)

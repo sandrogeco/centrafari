@@ -122,4 +122,3 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
 def visualizza_croce_riferimento(frame, x, y, width, heigth):
     disegna_croce(frame, (x - width / 2, y - heigth / 2), 1000, 1, 'green')
     disegna_croce(frame, (x + width / 2, y + heigth / 2), 1000, 1, 'green')
-

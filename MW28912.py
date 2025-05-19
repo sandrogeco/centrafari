@@ -17,7 +17,7 @@ import logging
 
 from funcs import rileva_punto_angoloso, visualizza_croce_riferimento, preprocess
 from camera import set_camera, apri_camera
-from comms import thread_comunicazione, cmd_da_proteus
+from comms import thread_comunicazione
 from utils import uccidi_processo
 
 
@@ -37,10 +37,15 @@ def show_frame(video, cache, lmain):
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
 
-    #    decode_cmd(cache['resp'])
-    print(cmd_da_proteus)
-    if cmd_da_proteus['croce'] == "croce_ON":
-        visualizza_croce_riferimento(image_output, 315, 160+cmd_da_proteus['inclinazione'], cmd_da_proteus['toh'], cmd_da_proteus['toh'])
+    stato_comunicazione = cache['stato_comunicazione']
+    if stato_comunicazione.get('croce', 'croce_OFF') == "croce_ON":
+        visualizza_croce_riferimento(
+            image_output,
+            315,
+            160 + stato_comunicazione.get('inclinazione', 0),
+            stato_comunicazione.get('tov', 50),
+            stato_comunicazione.get('toh', 50)
+        )
 
     if point:
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
@@ -78,21 +83,22 @@ if __name__ == "__main__":
 
     uccidi_processo("usb_video_capture_cm4")
 
-    try:
-        os.chdir("/home/pi/Applications/")
-    except:
-        pass
     tipo_faro = sys.argv[1].lower()
 
     # Carica la configurazione
-    with open(f"config_{tipo_faro}.json", "r") as f:
+    percorso_script = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(percorso_script, f"config_{tipo_faro}.json"), "r") as f:
         config = json.load(f)
 
+    if len(sys.argv) > 2:
+        config['port'] = int(sys.argv[2])
+
     cache = {
-        'DEBUG': True,
-        'config': config,
-        'queue': Queue(),
-        'resp': "",
+        "DEBUG": config.get("DEBUG") or False,
+        "config": config,
+
+        "stato_comunicazione": {},
+        "queue": Queue(),
     }
 
     threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()

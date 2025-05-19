@@ -1,52 +1,48 @@
 import socket
-
-cmd_da_proteus={
-    'croce':"croce_OFF",
-    'inclinazione':0
-}
+import logging
 
 
 def decode_cmd(resp):
-    #TODO
-    if "CFG->" in resp:
-        #TOV
-        cmd_da_proteus['tov']=int(resp[10:12])
-        #TOH
-        cmd_da_proteus['toh']=int(resp[34:36])
+    stato_comunicazione = {}
 
-    if "croce" in resp:
-        cmd_da_proteus['croce'] = resp
-    if "inclinazione*" in resp:
-        cmd_da_proteus['inclinazione'] = int(resp[len("inclinazione*"):])
-    return cmd_da_proteus
+    if resp.startswith("CFG->"):
+        # TOV
+        stato_comunicazione['tov'] = int(resp[10:13])
+        # TOH
+        stato_comunicazione['toh'] = int(resp[34:37])
+
+    if resp.startswith("croce"):
+        stato_comunicazione['croce'] = resp
+    elif resp.startswith("inclinazione*"):
+        stato_comunicazione['inclinazione'] = int(resp.replace("inclinazione*", ""))
+
+    return stato_comunicazione
 
 
 def thread_comunicazione(port, cache):
-    first_run=True
+    first_run = True
+
     while True:
         if first_run:
             msg = "start_cfg"
-            first_run=False
+            first_run = False
         else:
-            try:
+            if cache['queue'].empty():
+                msg = "idle"
+            else:
                 p = cache['queue'].get()
-                msg = "XYL "+str(p['posiz_pattern_x'])+" "+str(p['posiz_pattern_y'])+" "+str(p['lux'])+" "
-            except:
-                msg="no news"
+                msg = f"XYL {p['posiz_pattern_x']} {p['posiz_pattern_y']} {p['lux']} "
+
         try:
             conn = socket.socket()
             conn.connect(("localhost", port))
-            conn.sendall(msg.encode())  # send message
+            conn.sendall(msg.encode())
             data = conn.recv(1024).decode("UTF-8")
-            cache['resp'] = data.lstrip()
-            decode_cmd(cache['resp'])
-        except:
-            data = ""
-            pass
 
-        print("[TX] " + msg, flush=True)
-        print("[RX] " + data + "\n", flush=True)
-        with open("/tmp/all_msgs.txt", "w") as f:
-            f.write("[TX] " + msg + "\n")
-            f.write("[RX] " + data + "\n")
-       # time.sleep(0.5)
+            cache['stato_comunicazione'].update(decode_cmd(data.strip()))
+        except Exception as e:
+            logging.error(f"thread_comunicazione: error: {e}")
+            continue
+
+        logging.debug(f"[TX] {msg}")
+        logging.debug(f"[RX] {data}")
