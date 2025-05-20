@@ -43,11 +43,12 @@ def show_frame(video, cache, lmain):
             image_output,
             315,
             160 + stato_comunicazione.get('inclinazione', 0),
-            stato_comunicazione.get('TOV', 50),
-            stato_comunicazione.get('TOH', 50)
+            2*stato_comunicazione.get('TOV', 50),
+            2*stato_comunicazione.get('TOH', 50)
         )
 
     if point:
+
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
 
     if cache['DEBUG']:
@@ -58,7 +59,7 @@ def show_frame(video, cache, lmain):
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
-    lmain.after(500, lambda: show_frame(video, cache, lmain))
+    lmain.after(5, lambda: show_frame(video, cache, lmain))
 
 
 

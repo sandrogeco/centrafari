@@ -56,11 +56,15 @@ def thread_comunicazione(port, cache):
             msg = "start_cfg"
             first_run = False
         else:
-            if cache['queue'].empty():
-                msg = "idle"
-            else:
-                p = cache['queue'].get()
+          #  if cache['queue'].empty():
+          #      msg = "idle"
+          #  else:
+
+            try:
+                p = cache['queue'].get(timeout=0.3)
                 msg = f"XYL {p['posiz_pattern_x']} {p['posiz_pattern_y']} {p['lux']} "
+            except:
+                msg = "idle"
 
         try:
             conn = socket.socket()
@@ -74,4 +78,4 @@ def thread_comunicazione(port, cache):
 
         logging.debug(f"[TX] {msg}")
         logging.debug(f"[RX] {data}")
-        time.sleep(0.3)
+       # time.sleep(0.3)
