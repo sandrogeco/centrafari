@@ -43,8 +43,8 @@ def show_frame(video, cache, lmain):
             image_output,
             315,
             160 + stato_comunicazione.get('inclinazione', 0),
-            stato_comunicazione.get('tov', 50),
-            stato_comunicazione.get('toh', 50)
+            stato_comunicazione.get('TOV', 50),
+            stato_comunicazione.get('TOH', 50)
         )
 
     if point:
@@ -58,7 +58,9 @@ def show_frame(video, cache, lmain):
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
-    lmain.after(5, lambda: show_frame(video, cache, lmain))
+    lmain.after(500, lambda: show_frame(video, cache, lmain))
+
+
 
 
 def cleanup(p):
@@ -100,8 +102,8 @@ if __name__ == "__main__":
         "stato_comunicazione": {},
         "queue": Queue(),
     }
-
-    threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
+    #thread_comunicazione( config['port'], cache)
+    t=threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
 
     # Imposta la telecamera
     indice_camera, video = apri_camera()
