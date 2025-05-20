@@ -15,7 +15,7 @@ import signal
 from datetime import datetime
 import logging
 
-from funcs import rileva_punto_angoloso, visualizza_croce_riferimento, preprocess
+from funcs import rileva_punto_angoloso, visualizza_croce_riferimento, preprocess,draw_point
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione
 from utils import uccidi_processo
@@ -48,7 +48,7 @@ def show_frame(video, cache, lmain):
         )
 
     if point:
-
+        draw_point(point,stato_comunicazione)
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
 
     if cache['DEBUG']:
