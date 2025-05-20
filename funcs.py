@@ -118,9 +118,19 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
 
     return image_output, punto_finale, None
 
-def draw_point(point,stato_comunicazione):
-    #if in green
-    print('ops')
+
+def draw_point(image_output,point,cache):
+    stato_comunicazione=cache['stato_comunicazione']
+
+    if (cache['config']['width']/2-stato_comunicazione.get('TOH', 50))<point[0]:
+        if point[0]<(cache['config']['width']/2+stato_comunicazione.get('TOH', 50)):
+            if (cache['config']['height']/2-stato_comunicazione.get('TOV', 50) + stato_comunicazione.get('inclinazione', 0))<point[1]:
+                if point[1]< (cache['config']['height']/2+ stato_comunicazione.get('TOV', 50)+ stato_comunicazione.get('inclinazione', 0)):
+                    cv2.circle(image_output, point, 10, get_colore_bgr('green'), -1)
+                    return
+
+    cv2.circle(image_output, point, 10, get_colore_bgr('red'), -1)
+
 
 def visualizza_croce_riferimento(frame, x, y, width, heigth):
     disegna_croce(frame, (x - width / 2, y - heigth / 2), 1000, 1, 'green')

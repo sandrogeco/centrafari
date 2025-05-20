@@ -21,6 +21,7 @@ from comms import thread_comunicazione
 from utils import uccidi_processo
 
 
+
 def show_frame(video, cache, lmain):
     if cache['DEBUG']:
         t0 = time.monotonic()
@@ -41,14 +42,14 @@ def show_frame(video, cache, lmain):
     if stato_comunicazione.get('croce', 'croce_OFF') == "croce_ON":
         visualizza_croce_riferimento(
             image_output,
-            315,
-            160 + stato_comunicazione.get('inclinazione', 0),
+            int(cache['config']['width']/2),
+            int(cache['config']['height']/2)+ stato_comunicazione.get('inclinazione', 0),
             2*stato_comunicazione.get('TOV', 50),
             2*stato_comunicazione.get('TOH', 50)
         )
 
     if point:
-        draw_point(point,stato_comunicazione)
+        draw_point(image_output,point,cache)
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
 
     if cache['DEBUG']:
@@ -96,14 +97,16 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         config['port'] = int(sys.argv[2])
 
+
     cache = {
         "DEBUG": config.get("DEBUG") or False,
         "config": config,
-
         "stato_comunicazione": {},
         "queue": Queue(),
     }
     #thread_comunicazione( config['port'], cache)
+    #pippo=[]
+    #draw_point(pippo,(10,10),cache)
     t=threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
 
     # Imposta la telecamera
