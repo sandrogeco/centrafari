@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import logging
 
-from utils import get_colore_bgr, angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, disegna_croce
+from utils import get_colore_bgr, get_colore,angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, disegna_croce
 
 def preprocess(image, cache):
     config = cache['config']
@@ -126,10 +126,10 @@ def draw_point(image_output,point,cache):
         if point[0]<(cache['config']['width']/2+stato_comunicazione.get('TOH', 50)):
             if (cache['config']['height']/2-stato_comunicazione.get('TOV', 50) + stato_comunicazione.get('inclinazione', 0))<point[1]:
                 if point[1]< (cache['config']['height']/2+ stato_comunicazione.get('TOV', 50)+ stato_comunicazione.get('inclinazione', 0)):
-                    cv2.circle(image_output, point, 10, get_colore_bgr('green'), -1)
+                    cv2.circle(image_output, point, 10, get_colore('green'), -1)
                     return
 
-    cv2.circle(image_output, point, 10, get_colore_bgr('red'), -1)
+    cv2.circle(image_output, point, 10, get_colore('red'), -1)
 
 
 def visualizza_croce_riferimento(frame, x, y, width, heigth):

@@ -5,11 +5,12 @@ import time
 
 def decode_cmd(resp):
     stato_comunicazione = {}
-
     if resp.startswith("CFG->"):
-        # TOV
+        stato_comunicazione['pattern'] = int(resp[5])
+        stato_comunicazione['croce'] = int(resp[6])
         stato_comunicazione['TOV'] = int(resp[10:13])
         stato_comunicazione['mpx'] = float(resp[16:24])
+        stato_comunicazione['inclinazione'] = int(resp[27:31])
         stato_comunicazione['TOH'] = int(resp[34:37])
         stato_comunicazione['GSF'] = float(resp[40:43])
         stato_comunicazione['TAX'] = float(resp[46:51])
@@ -38,12 +39,12 @@ def decode_cmd(resp):
         stato_comunicazione['stc'] = float(resp[205:208])
         stato_comunicazione['AtV'] = float(resp[211:214])
 
-
-
-    if resp.startswith("croce"):
-        stato_comunicazione['croce'] = resp
-    elif resp.startswith("inclinazione*"):
-        stato_comunicazione['inclinazione'] = int(resp.replace("inclinazione*", ""))
+    #
+    #
+    # if resp.startswith("croce"):
+    #     stato_comunicazione['croce'] = resp
+    # elif resp.startswith("inclinazione*"):
+    #     stato_comunicazione['inclinazione'] = int(resp.replace("inclinazione*", ""))
 
     return stato_comunicazione
 
