@@ -39,6 +39,7 @@ def show_frame(video, cache, lmain):
     image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
 
     stato_comunicazione = cache['stato_comunicazione']
+    logging.debug(stato_comunicazione)
     if stato_comunicazione.get('croce', 0) == 1:
         visualizza_croce_riferimento(
             image_output,

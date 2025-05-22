@@ -54,7 +54,7 @@ def thread_comunicazione(port, cache):
 
     while True:
         if first_run:
-            msg = "start_cfg"
+            msg = "start_cfg "
             first_run = False
         else:
           #  if cache['queue'].empty():
@@ -65,8 +65,7 @@ def thread_comunicazione(port, cache):
                 p = cache['queue'].get(timeout=0.3)
                 msg = f"XYL {p['posiz_pattern_x']} {p['posiz_pattern_y']} {p['lux']} "
             except:
-                msg = "idle"
-
+                msg = "idle "
         try:
             conn = socket.socket()
             conn.connect(("localhost", port))

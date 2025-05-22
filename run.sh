@@ -178,7 +178,7 @@ for arg in "$@"; do
         send_script
         ;;
     "run")
-        kill_script
+      #  kill_script
         run_script
         ;;
     "remotelog")
