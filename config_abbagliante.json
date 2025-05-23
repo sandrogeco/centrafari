@@ -8,7 +8,7 @@
     "brightness": 0,
     "contrast": 100,
     "saturation": 0,
-    "exposure_absolute": 50,
+    "exposure_absolute": 100,
 
     "port": 28500
 }

@@ -15,7 +15,7 @@ import signal
 from datetime import datetime
 import logging
 
-from funcs import rileva_punto_angoloso, visualizza_croce_riferimento, preprocess,draw_point
+from funcs import rileva_punto_angoloso, trova_contrni_abbagliante,visualizza_croce_riferimento, preprocess,draw_point
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione
 from utils import uccidi_processo
@@ -36,7 +36,10 @@ def show_frame(video, cache, lmain):
     image_input = preprocess(image_input, cache)
 
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-    image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
+    if cache['type']=='anabbagliante':
+        image_output, point,lux, _ = rileva_punto_angoloso(image_input, image_output, cache)
+    if cache['type']=='abbagliante':
+        image_output, point,lux, _ = trova_contrni_abbagliante(image_input, image_output, cache)
 
     stato_comunicazione = cache['stato_comunicazione']
     logging.debug(stato_comunicazione)
@@ -51,7 +54,7 @@ def show_frame(video, cache, lmain):
 
     if point:
         draw_point(image_output,point,cache)
-        cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': 0 })
+        cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux })
 
     if cache['DEBUG']:
         logging.debug(f"Durata elaborazione: {1000 * (time.monotonic() - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}")
@@ -104,6 +107,7 @@ if __name__ == "__main__":
         "config": config,
         "stato_comunicazione": {},
         "queue": Queue(),
+        "type":tipo_faro,
     }
     #thread_comunicazione( config['port'], cache)
     #pippo=[]

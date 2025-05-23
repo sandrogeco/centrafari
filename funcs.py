@@ -2,7 +2,9 @@ import numpy as np
 import cv2
 import logging
 
-from utils import get_colore_bgr, get_colore,angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, disegna_croce
+from utils import get_colore_bgr, get_colore, angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, \
+    disegna_croce, disegna_rettangolo
+
 
 def preprocess(image, cache):
     config = cache['config']
@@ -87,7 +89,7 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
 
         v_prec_verso_alto = angolo_vettori((1, 0), differenza_vettori(v_prec, v)) > 0
 
-        if 12 < angolo < 18 and v_prec_verso_alto:
+        if 2 < angolo < 30 and v_prec_verso_alto:#12 18
             punti.append(v)
             # cv2.circle(image_output, v, 2, get_colore_bgr('green'), -1)
             # Decommenta queste due o tre linee sotto per visualizzare i vettori che danno l'angolo e per scrivere l'angolo
@@ -102,7 +104,7 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
     punti = [p for p in punti if min_contour_x + (0.05 * range_contour_x) < p[0] < max_contour_x - (0.05 * range_contour_x)]
 
     if len(punti) == 0:
-        return image_output, None, '[rileva_punto_angoloso] nessun punto trovato'
+        return image_output, None, None,'[rileva_punto_angoloso] nessun punto trovato'
 
     for punto in punti:
         cv2.circle(image_output, punto, 2, get_colore_bgr('green'), -1)
@@ -115,8 +117,8 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
         punto_finale = tuple(np.median(cache['lista_ultimi_punti'], axis=0).astype(np.int32))
 
     cv2.circle(image_output, punto_finale, 10, get_colore_bgr('green'), -1)
-
-    return image_output, punto_finale, None
+    lux=calc_lux(image_output,punto_finale,(20,20),(30,30),'anabbagliante')
+    return image_output, punto_finale, lux,None
 
 
 def draw_point(image_output,point,cache):
@@ -131,7 +133,64 @@ def draw_point(image_output,point,cache):
 
     cv2.circle(image_output, point, 10, get_colore('red'), -1)
 
+def calc_lux(image_output,point,offset,dim,type='anabbagliante'):
+    disegna_rettangolo(image_output,
+                       (int(point[0]+offset[0]-dim[0]/2),int(point[1]+offset[1]+dim[1]/2)),
+                       (int(point[0] + offset[0] + dim[0] / 2), int(point[1] + offset[1] - dim[1] / 2)),1,'green')
+    zone=image_output[int(point[0]+offset[0]-dim[0]/2):int(point[0]+offset[0]+dim[0]/2),
+         int(point[1]+offset[1]-dim[1]/2):int(point[1]+offset[1]+dim[1]/2)]
+    #logging.debug(str( int(point[0]+offset[0]-dim[0]/2))+"  "+str(int(point[0]+offset[0]+dim[0]/2))+" "+
+    #     str(int(point[1]+offset[1]-dim[1]/2))+"  "+str(int(point[1]+offset[1]+dim[1]/2)))
+
+    lux=np.mean(zone)
+    return lux
+
+
 
 def visualizza_croce_riferimento(frame, x, y, width, heigth):
     disegna_croce(frame, (x - width / 2, y - heigth / 2), 1000, 1, 'green')
     disegna_croce(frame, (x + width / 2, y + heigth / 2), 1000, 1, 'green')
+
+
+
+def trova_contrni_abbagliante(image_input, image_output,cache):
+    WIDTH_PIXEL = image_input.shape[1]
+    AREA=image_input.shape[0]*image_input.shape[1]
+    LEVEL=0.9
+    imout =image_input.copy()
+
+    cv2.normalize(image_input,imout,0,255,cv2.NORM_MINMAX)
+    cv2.fastNlMeansDenoising(imout,imout,1000)
+
+    imout1=imout.copy()
+
+    c=np.cumsum(np.histogram(imout1.reshape(AREA),bins=255)[0])/AREA
+    l=np.where(c>LEVEL)[0][0]
+    imout1[imout<l]=0
+    nup=np.sum([imout1>0])
+
+    x = np.arange(imout1.shape[1])
+    y = np.arange(imout1.shape[0])
+    xx, yy = np.meshgrid(x, y)
+    logging.error("min "+str(np.min(imout1)))
+    imout1_float = imout1.astype(np.float32)
+    A = imout1_float.sum()
+
+    x_cms = (np.int32)((xx * imout1_float).sum() / A)
+    y_cms = (np.int32)((yy * imout1_float).sum() / A)
+
+    cv2.putText(image_output, 'aut-level '+str(l)+' num pixel brighter '+str(nup), (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,  get_colore('red'), 1)
+    cv2.putText(image_output, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,  get_colore('red'), 1)
+
+    try:
+        edges = cv2.Canny(imout1, 50, 150)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour=max(contours, key=lambda d: cv2.contourArea(d))
+        cv2.drawContours(image_output, [contour], -1, get_colore('red'), 1)
+        cv2.circle(image_output, (x_cms, y_cms), 6, get_colore('green'), -1)
+    except Exception as e:
+        logging.error(f"abbagliante: error: {e}")
+
+    lux = calc_lux(image_output, (x_cms,y_cms), (0, 0), (30, 30), 'abbagliante')
+
+    return image_output, (x_cms,y_cms),lux,None
