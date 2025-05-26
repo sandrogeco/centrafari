@@ -67,6 +67,37 @@ def show_frame(video, cache, lmain):
     lmain.after(5, lambda: show_frame(video, cache, lmain))
 
 
+def thread_video():
+    while True:
+        # Imposta la telecamera
+        indice_camera, video = apri_camera()
+        if video is None:
+            logging.error("Nessuna telecamera trovata! Uscita")
+            sys.exit(1)
+        video.release()
+        set_camera(indice_camera, config)
+
+        # Avvia la cattura delle immagini
+        time.sleep(1)
+        fout = open("/tmp/vc_out", "w")
+        ferr = open("/tmp/vc_err", "w")
+        process_video_capture = subprocess.Popen(
+            "/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video" + str(indice_camera) + "",
+            shell=True,
+            preexec_fn=os.setsid,
+            stdin=subprocess.DEVNULL,
+            stdout=fout,
+            stderr=ferr
+        )
+        atexit.register(partial(cleanup, process_video_capture))
+        logging.debug("cattura avviata")
+
+        def _sig_handler(signum, frame):
+            cleanup(process_video_capture)
+            sys.exit(0)
+
+        for s in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(s, _sig_handler)
 
 
 def cleanup(p):
@@ -75,6 +106,8 @@ def cleanup(p):
         os.killpg(p.pid, signal.SIGTERM)
     except ProcessLookupError:
         pass
+
+
 
 
 if __name__ == "__main__":
@@ -113,8 +146,7 @@ if __name__ == "__main__":
     #pippo=[]
     #draw_point(pippo,(10,10),cache)
     t=threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
-
-    # Imposta la telecamera
+   # tc=threading.Thread(target=partial(thread_video), daemon=True, name="camera").start()
     indice_camera, video = apri_camera()
     if video is None:
         logging.error("Nessuna telecamera trovata! Uscita")
@@ -124,23 +156,27 @@ if __name__ == "__main__":
 
     # Avvia la cattura delle immagini
     time.sleep(1)
+    fout = open("/tmp/vc_out", "w")
+    ferr = open("/tmp/vc_err", "w")
     process_video_capture = subprocess.Popen(
-        "/home/pi/Applications/usb_video_capture_cm4 -c 10000000 &",
+        "/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video" + str(indice_camera) + "",
         shell=True,
         preexec_fn=os.setsid,
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        stdout=fout,
+        stderr=ferr
     )
     atexit.register(partial(cleanup, process_video_capture))
     logging.debug("cattura avviata")
+
+
     def _sig_handler(signum, frame):
         cleanup(process_video_capture)
         sys.exit(0)
 
+
     for s in (signal.SIGINT, signal.SIGTERM):
         signal.signal(s, _sig_handler)
-
     # Imposta la finestra
     root = tk.Tk()
     root.overrideredirect(True)
