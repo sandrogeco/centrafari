@@ -62,7 +62,7 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
     # Rileva contorno
     contour, err = rileva_contorno(image_input, cache)
     if contour is None or err is not None:
-        return image_input, None,'[rileva_punto_angoloso] contour is None'
+        return image_input, None,None,'[rileva_punto_angoloso] contour is None'
 
     # Analisi contorno
     if cache['DEBUG']:
