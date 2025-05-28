@@ -120,6 +120,15 @@ if __name__ == "__main__":
         ]
     )
 
+    def log_unhandled(exc_type, exc_value, exc_tb):
+        logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
+    sys.excepthook = log_unhandled
+
+    def log_thread_exceptions(args):
+        logging.error("Uncaught exception in thread %s", args.thread.name,
+                      exc_info=(args.exc_type, args.exc_value, args.exc_traceback))
+    threading.excepthook = log_thread_exceptions
+
     logging.info(f"Avvio MW28912.py {sys.argv}")
 
     uccidi_processo("usb_video_capture_cm4")
