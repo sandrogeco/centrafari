@@ -28,7 +28,7 @@ kill_script() {
     echo "*** kill_script"
 
     # shellcheck disable=SC2087
-    ssh "pi@$TARGET_IP" >/dev/null 2>&1 <<EOF
+    ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" >/dev/null 2>&1 <<EOF
         echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912.py" || true
         echo 1234 | sudo -S pkill -9 MW28912 || true
         echo 1234 | sudo -S pkill -15 "emulatore_proteus.py" || true
@@ -56,7 +56,7 @@ send_script() {
         ; do
         # Trasferisci solo i file effettivamente cambiati dall'ultimo invio
         if ! grep -q "$(md5sum "$file" | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
-            scp $file pi@"$TARGET_IP":"$TARGET_DESTINATION_FOLDER"
+            scp -P "$TARGET_SSH_PORT" $file pi@"$TARGET_IP":"$TARGET_DESTINATION_FOLDER"
         else
             echo "Skip send $file to $TARGET_IP"
         fi
@@ -64,7 +64,7 @@ send_script() {
 
     # Trasferisci l'emulatore
     if ! grep -q "$(md5sum emulatore_proteus.py | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
-        scp "emulatore_proteus.py" pi@"$TARGET_IP":"/tmp/emulatore_proteus.py"
+        scp -P "$TARGET_SSH_PORT" "emulatore_proteus.py" pi@"$TARGET_IP":"/tmp/emulatore_proteus.py"
     else
         echo "Skip send emulatore_proteus.py to $TARGET_IP"
     fi
@@ -88,7 +88,7 @@ run_script() {
     echo "*** run_script"
 
     # shellcheck disable=SC2087
-    ssh "pi@$TARGET_IP" <<EOF
+    ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" <<EOF
         echo -e "\n\n\n\n"
         echo 1234 | sudo -S rm -f /tmp/all_msgs.txt
 
@@ -105,7 +105,7 @@ EOF
 
 view_remote_log() {
     echo "*** view_remote_log"
-    ssh "pi@$TARGET_IP" <<'EOF'
+    ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" <<'EOF'
         echo -e "\n\n\n\n"
         last_log=$(find /tmp/ -type f -name 'MW28912py_log_*.log' 2>/dev/null | sort -r | head -1)
 
@@ -127,6 +127,7 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     exit 0
 fi
 
+TARGET_SSH_PORT=22
 TARGET_DESTINATION_FOLDER="/home/pi/Applications"
 PROFILE_ARGS=""
 USA_EMULATORE=
@@ -143,6 +144,9 @@ for arg in "$@"; do
     # Impostazione parametri
     "TARGET_IP="*)
         TARGET_IP="${arg#*=}"
+        ;;
+    "TARGET_SSH_PORT="*)
+        TARGET_SSH_PORT="${arg#*=}"
         ;;
     "TIPO_FARO="*)
         TIPO_FARO="${arg#*=}"
@@ -178,7 +182,6 @@ for arg in "$@"; do
         send_script
         ;;
     "run")
-      #  kill_script
         run_script
         ;;
     "remotelog")

@@ -1,11 +1,9 @@
-from datetime import datetime
-
 import numpy as np
 import cv2
 import logging
 
 from utils import get_colore_bgr, get_colore, angolo_vettori, find_y_by_x, angolo_esterno_vettori, differenza_vettori, \
-    disegna_croce, disegna_rettangolo
+    disegna_croce, disegna_rettangolo, disegna_pallino
 
 
 def preprocess(image, cache):
@@ -52,22 +50,22 @@ def rileva_contorno(image, cache):
     contour = contour[contour[:, 0, 0].argsort()]
     return contour, None
 
-def rileva_punto_angoloso(image_input, image_output, cache=None):
+def rileva_punto_angoloso(image_input, image_output, cache):
     WIDTH_PIXEL = image_input.shape[1]
     AREA = image_input.shape[0] * image_input.shape[1]
-    nclip = np.sum(image_input >= 255) / AREA
-    cv2.putText(image_output, 'clipping: ' + str(nclip) + '% Max level: ' + str(np.max(image_input)), (5, 20),
-                cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-                get_colore('green'), 1)
+
     # Rileva contorno
     contour, err = rileva_contorno(image_input, cache)
     if contour is None or err is not None:
         return image_input, None,None,'[rileva_punto_angoloso] contour is None'
 
-    # Analisi contorno
     if cache['DEBUG']:
         cv2.drawContours(image_output, [contour], -1, get_colore_bgr('red'), 1)
+        cv2.putText(image_output, f"clipping: {np.sum(image_input >= 255) / AREA}%, Max level: {np.max(image_input)}", (5, 20),
+                    cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
+                    get_colore('green'), 1)
 
+    # Analisi contorno
     delta = 20
     punti = []
 
@@ -97,11 +95,6 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
 
         if 12 < angolo < 18 and v_prec_verso_alto:#12 18
             punti.append(v)
-            # cv2.circle(image_output, v, 2, get_colore_bgr('green'), -1)
-            # Decommenta queste due o tre linee sotto per visualizzare i vettori che danno l'angolo e per scrivere l'angolo
-            # cv2.line(image_output, v_prec, v, get_colore_bgr('green'), 1)
-            # cv2.line(image_output, v, v_succ, get_colore_bgr('green'), 1)
-            # cv2.putText(image_output, f'{int(angolo)}', somma_vettori(v, (10, 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, get_colore_bgr('green'), 1)
 
     # Rimuovo i punti che sono troppo vicini alle estremita' del contour
     min_contour_x = np.min(contour[:, 0, 0])
@@ -123,37 +116,35 @@ def rileva_punto_angoloso(image_input, image_output, cache=None):
         punto_finale = tuple(np.median(cache['lista_ultimi_punti'], axis=0).astype(np.int32))
 
     cv2.circle(image_output, punto_finale, 10, get_colore_bgr('green'), -1)
-    lux = calc_lux(image_input, image_output, punto_finale, (20, 20), (30, 30), 'anabbagliante')
+    lux = calcola_lux(image_input, image_output, punto_finale, (20, 20), (30, 30), 'anabbagliante', cache)
     return image_output, punto_finale, lux,None
 
 
-def draw_point(image_output,point,cache):
-    stato_comunicazione=cache['stato_comunicazione']
+def disegna_punto(image_output, point, cache):
+    stato_comunicazione = cache['stato_comunicazione']
+    width = cache["config"]["width"]
+    height = cache["config"]["height"]
+    toh = stato_comunicazione.get('TOH', 50)
+    tov = stato_comunicazione.get('TOV', 50)
+    inclinazione = stato_comunicazione.get('inclinazione', 0)
 
-    if (cache['config']['width']/2-stato_comunicazione.get('TOH', 50))<=point[0]:
-        if point[0]<=(cache['config']['width']/2+stato_comunicazione.get('TOH', 50)):
-            if (cache['config']['height']/2-stato_comunicazione.get('TOV', 50) + stato_comunicazione.get('inclinazione', 0))<=point[1]:
-                if point[1]<= (cache['config']['height']/2+ stato_comunicazione.get('TOV', 50)+ stato_comunicazione.get('inclinazione', 0)):
-                    cv2.circle(image_output, point, 10, get_colore('green'), -1)
-                    return
+    is_punto_centrato = (width / 2 - toh) <= point[0] <= (width / 2 + toh) \
+        and (height / 2 - tov + inclinazione) <= point[1] <= (height / 2 + tov + inclinazione)
 
-    cv2.circle(image_output, point, 10, get_colore('red'), -1)
+    disegna_pallino(image_output, point, 10, 'green' if is_punto_centrato else 'red', -1)
 
-def calc_lux(image_input,image_output,point,offset,dim,type='anabbagliante'):
 
+def calcola_lux(image_input, image_output, point, offset, dim, tipo_faro, cache):
+    zone = image_input[int(point[1]+offset[1]-dim[1]/2):int(point[1]+offset[1]+dim[1]/2), int(point[0]+offset[0]-dim[0]/2):int(point[0]+offset[0]+dim[0]/2)]
     disegna_rettangolo(image_output,
-                       (int(point[0]+offset[0]-dim[0]/2),int(point[1]+offset[1]+dim[1]/2)),
-                       (int(point[0] + offset[0] + dim[0] / 2), int(point[1] + offset[1] - dim[1] / 2)),1,'green')
-    zone=image_input[int(point[1]+offset[1]-dim[1]/2):int(point[1]+offset[1]+dim[1]/2),int(point[0]+offset[0]-dim[0]/2):int(point[0]+offset[0]+dim[0]/2)]
-    #image_output[int(point[1]+offset[1]-dim[1]/2):int(point[1]+offset[1]+dim[1]/2),int(point[0]+offset[0]-dim[0]/2):int(point[0]+offset[0]+dim[0]/2)]=255
-    #logging.debug(str( int(point[0]+offset[0]-dim[0]/2))+"  "+str(int(point[0]+offset[0]+dim[0]/2))+" "+
-    #     str(int(point[1]+offset[1]-dim[1]/2))+"  "+str(int(point[1]+offset[1]+dim[1]/2)))
-    cv2.putText(image_output, 'max '+str(np.max(zone))+' mean '+str(np.mean(zone)), (5, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-                get_colore('green'), 1)
+                    (int(point[0] + offset[0] - dim[0] / 2), int(point[1] + offset[1] + dim[1] / 2)),
+                    (int(point[0] + offset[0] + dim[0] / 2), int(point[1] + offset[1] - dim[1] / 2)), 1, 'green')
 
-    lux=np.mean(zone)
-    return lux
+    if cache['DEBUG']:
+        cv2.putText(image_output, f"max {np.max(zone)}, mean {int(np.mean(zone))}", (5, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
+                    get_colore('green'), 1)
 
+    return np.mean(zone)
 
 
 def visualizza_croce_riferimento(frame, x, y, width, heigth):
@@ -161,23 +152,22 @@ def visualizza_croce_riferimento(frame, x, y, width, heigth):
     disegna_croce(frame, (x + width / 2, y + heigth / 2), 1000, 1, 'green')
 
 
-
-def trova_contrni_abbagliante(image_input, image_output,cache):
-    WIDTH_PIXEL = image_input.shape[1]
-    AREA=image_input.shape[0]*image_input.shape[1]
-    LEVEL=0.97
+def trova_contorni_abbagliante(image_input, image_output, cache):
+    AREA = image_input.shape[0] * image_input.shape[1]
+    LEVEL = 0.97
     nclip = np.sum(image_input >= 255) / AREA
 
-    imout1 =image_input.copy()
+    image_tmp = image_input.copy()
 
-    cv2.normalize(image_input,imout1,0,255,cv2.NORM_MINMAX)
-    c=np.cumsum(np.histogram(imout1.reshape(AREA),bins=255)[0])/AREA
-    l=np.where(c>LEVEL)[0][0]
-    imout1[imout1<l]=0
-  #  nup=np.sum([imout1>0])
-    cv2.putText(image_output,'clipping: ' + str(nclip) + '% Max level: ' + str(np.max(image_input))+' aut level:'+str(l), (5, 20),
-                cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-                get_colore('green'), 1)
+    cv2.normalize(image_input, image_tmp, 0, 255, cv2.NORM_MINMAX)
+    c = np.cumsum(np.histogram(image_tmp.reshape(AREA), bins=255)[0]) / AREA
+    l = np.where(c > LEVEL)[0][0]
+    image_tmp[image_tmp < l] = 0
+
+    if cache["DEBUG"]:
+        cv2.putText(image_output, f"clipping: {nclip}%, Max level: {np.max(image_input)}, aut level: {l}", (5, 20),
+                    cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
+                    get_colore('green'), 1)
 
     # x = np.arange(imout1.shape[1])
     # y = np.arange(imout1.shape[0])
@@ -188,7 +178,7 @@ def trova_contrni_abbagliante(image_input, image_output,cache):
     # x_cms = (np.int32)((xx * imout1_float).sum() / A)
     # y_cms = (np.int32)((yy * imout1_float).sum() / A)
 
-    moments = cv2.moments(imout1, binaryImage=True)
+    moments = cv2.moments(image_tmp, binaryImage=True)
 
     # Evita divisione per zero
     if moments['m00'] != 0:
@@ -198,19 +188,18 @@ def trova_contrni_abbagliante(image_input, image_output,cache):
         logging.error("punto abbagliante non trovato")
         return image_output, None, None, "punto non trovato"
 
-    lux = calc_lux(image_output, image_output,(x_cms, y_cms), (0, 0), (50, 50), 'abbagliante')
+    lux = calcola_lux(image_output, image_output, (x_cms, y_cms), (0, 0), (50, 50), 'abbagliante', cache)
 
-    #cv2.putText(image_output, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,  get_colore('red'), 1)
+    # cv2.putText(image_output, 'x:' + str(x_cms)+ ' y:' + str(y_cms), (5, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,  get_colore('red'), 1)
 
-    try:
-       # edges = cv2.Canny(imout1, 50, 150)
-        contours, _ = cv2.findContours(imout1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contour=max(contours, key=lambda d: cv2.contourArea(d))
-        cv2.drawContours(image_output, [contour], -1, get_colore('red'), 1)
-        cv2.circle(image_output, (x_cms, y_cms), 6, get_colore('green'), -1)
-    except Exception as e:
-        logging.error("abbagliante "+str(e))
+    if cache['DEBUG']:
+        try:
+            contours, _ = cv2.findContours(image_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contour = max(contours, key=lambda d: cv2.contourArea(d))
+            cv2.drawContours(image_output, [contour], -1, get_colore('red'), 1)
+        except Exception as e:
+            logging.error(f"trova_contorni_abbagliante e={e}")
 
+    cv2.circle(image_output, (x_cms, y_cms), 6, get_colore('green'), -1)
 
-
-    return image_output, (x_cms,y_cms),lux,None
+    return image_output, (x_cms, y_cms), lux, None

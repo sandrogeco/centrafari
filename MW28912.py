@@ -15,11 +15,10 @@ import signal
 from datetime import datetime
 import logging
 
-from funcs import rileva_punto_angoloso, trova_contrni_abbagliante,visualizza_croce_riferimento, preprocess,draw_point
+from funcs import rileva_punto_angoloso, trova_contorni_abbagliante, visualizza_croce_riferimento, preprocess, disegna_punto
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione
 from utils import uccidi_processo
-
 
 
 def show_frame(video, cache, lmain):
@@ -36,24 +35,25 @@ def show_frame(video, cache, lmain):
     image_input = preprocess(image_input, cache)
 
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-    if cache['type']=='anabbagliante':
-        image_output, point,lux, _ = rileva_punto_angoloso(image_input, image_output, cache)
-    if cache['type']=='abbagliante':
-        image_output, point,lux, _ = trova_contrni_abbagliante(image_input, image_output, cache)
+    if cache['tipo_faro'] == 'anabbagliante':
+        image_output, point, lux, _ = rileva_punto_angoloso(image_input, image_output, cache)
+    if cache['tipo_faro'] == 'abbagliante':
+        image_output, point, lux, _ = trova_contorni_abbagliante(image_input, image_output, cache)
 
     stato_comunicazione = cache['stato_comunicazione']
     logging.debug(stato_comunicazione)
+
     if stato_comunicazione.get('croce', 0) == 1:
         visualizza_croce_riferimento(
             image_output,
-            int(cache['config']['width']/2),
-            int(cache['config']['height']/2)+ stato_comunicazione.get('inclinazione', 0),
-            2*stato_comunicazione.get('TOV', 50),
-            2*stato_comunicazione.get('TOH', 50)
+            int(cache['config']['width'] / 2),
+            int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0),
+            2 * stato_comunicazione.get('TOV', 50),
+            2 * stato_comunicazione.get('TOH', 50)
         )
 
     if point:
-        draw_point(image_output,point,cache)
+        disegna_punto(image_output, point, cache)
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux })
 
     if cache['DEBUG']:
@@ -67,47 +67,12 @@ def show_frame(video, cache, lmain):
     lmain.after(5, lambda: show_frame(video, cache, lmain))
 
 
-def thread_video():
-    while True:
-        # Imposta la telecamera
-        indice_camera, video = apri_camera()
-        if video is None:
-            logging.error("Nessuna telecamera trovata! Uscita")
-            sys.exit(1)
-        video.release()
-        set_camera(indice_camera, config)
-
-        # Avvia la cattura delle immagini
-        time.sleep(1)
-        fout = open("/tmp/vc_out", "w")
-        ferr = open("/tmp/vc_err", "w")
-        process_video_capture = subprocess.Popen(
-            "/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video" + str(indice_camera) + "",
-            shell=True,
-            preexec_fn=os.setsid,
-            stdin=subprocess.DEVNULL,
-            stdout=fout,
-            stderr=ferr
-        )
-        atexit.register(partial(cleanup, process_video_capture))
-        logging.debug("cattura avviata")
-
-        def _sig_handler(signum, frame):
-            cleanup(process_video_capture)
-            sys.exit(0)
-
-        for s in (signal.SIGINT, signal.SIGTERM):
-            signal.signal(s, _sig_handler)
-
-
 def cleanup(p):
     logging.info("cleanup...")
     try:
         os.killpg(p.pid, signal.SIGTERM)
     except ProcessLookupError:
         pass
-
-
 
 
 if __name__ == "__main__":
@@ -143,19 +108,18 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         config['port'] = int(sys.argv[2])
 
+    logging.getLogger().setLevel(logging.DEBUG if config.get("DEBUG", False) else logging.INFO)
 
     cache = {
         "DEBUG": config.get("DEBUG") or False,
         "config": config,
         "stato_comunicazione": {},
         "queue": Queue(),
-        "type":tipo_faro,
+        "tipo_faro": tipo_faro,
     }
-    #thread_comunicazione( config['port'], cache)
-    #pippo=[]
-    #draw_point(pippo,(10,10),cache)
-    t=threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
-   # tc=threading.Thread(target=partial(thread_video), daemon=True, name="camera").start()
+
+    threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
+
     indice_camera, video = apri_camera()
     if video is None:
         logging.error("Nessuna telecamera trovata! Uscita")
@@ -165,27 +129,24 @@ if __name__ == "__main__":
 
     # Avvia la cattura delle immagini
     time.sleep(1)
-    fout = open("/tmp/vc_out", "w")
-    ferr = open("/tmp/vc_err", "w")
     process_video_capture = subprocess.Popen(
-        "/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video" + str(indice_camera) + "",
+        f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera} &>/tmp/usb_video_capture_cm4.log",
         shell=True,
         preexec_fn=os.setsid,
         stdin=subprocess.DEVNULL,
-        stdout=fout,
-        stderr=ferr
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     atexit.register(partial(cleanup, process_video_capture))
-    logging.debug("cattura avviata")
-
+    logging.debug("Cattura avviata")
 
     def _sig_handler(signum, frame):
         cleanup(process_video_capture)
         sys.exit(0)
 
-
     for s in (signal.SIGINT, signal.SIGTERM):
         signal.signal(s, _sig_handler)
+
     # Imposta la finestra
     root = tk.Tk()
     root.overrideredirect(True)

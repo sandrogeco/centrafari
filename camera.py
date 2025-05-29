@@ -2,6 +2,7 @@ import os
 import cv2
 import logging
 
+
 def apri_camera():
     for i in range(11):
         video = cv2.VideoCapture(i)
@@ -10,8 +11,9 @@ def apri_camera():
 
     return None, None
 
+
 def set_camera(i, config):
-    logging.getLogger().info(f"set_camera /dev/video{i}")
+    logging.info(f"set_camera /dev/video{i}")
 
     try:
         #os.system(f"v4l2-ctl --device /dev/video{i} --set-ctrl=exposure_auto={config['exposure_auto']}")
@@ -22,4 +24,4 @@ def set_camera(i, config):
 
         os.system(f"v4l2-ctl --device /dev/video{i} --list-ctrls")
     except Exception as e:
-        logging.getLogger().error(f"error: {e}")
+        logging.error(f"error: {e}")
