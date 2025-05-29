@@ -40,10 +40,10 @@ def show_frame(video, cache, lmain):
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if cache['tipo_faro'] == 'anabbagliante':
         image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
-        lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache)
+        lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
-        lux = calcola_lux(image_output, image_output, point, (0, 0), (50, 50), cache)
+        lux = calcola_lux(image_output, image_output, point, (0, 0), (50, 50), cache) if point else 0
 
     stato_comunicazione = cache['stato_comunicazione']
     logging.debug(stato_comunicazione)
