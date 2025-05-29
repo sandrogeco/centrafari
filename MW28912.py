@@ -15,7 +15,10 @@ import signal
 from datetime import datetime
 import logging
 
-from funcs import rileva_punto_angoloso, trova_contorni_abbagliante, visualizza_croce_riferimento, preprocess, disegna_punto
+from funcs_misc import preprocess, visualizza_croce_riferimento, disegna_punto
+from funcs_anabbagliante import rileva_punto_angoloso
+from funcs_abbagliante import trova_contorni_abbagliante
+from funcs_luminosita import calcola_lux
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione
 from utils import uccidi_processo
@@ -36,9 +39,11 @@ def show_frame(video, cache, lmain):
 
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if cache['tipo_faro'] == 'anabbagliante':
-        image_output, point, lux, _ = rileva_punto_angoloso(image_input, image_output, cache)
-    if cache['tipo_faro'] == 'abbagliante':
-        image_output, point, lux, _ = trova_contorni_abbagliante(image_input, image_output, cache)
+        image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
+        lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache)
+    elif cache['tipo_faro'] == 'abbagliante':
+        image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
+        lux = calcola_lux(image_output, image_output, point, (0, 0), (50, 50), cache)
 
     stato_comunicazione = cache['stato_comunicazione']
     logging.debug(stato_comunicazione)

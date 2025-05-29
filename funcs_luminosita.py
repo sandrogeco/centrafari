@@ -1,0 +1,21 @@
+import numpy as np
+import cv2
+
+from utils import disegna_rettangolo, get_colore
+
+
+def calcola_lux(image_input, image_output, point, offset, dim, cache):
+    x0 = int(point[0] + offset[0] - dim[0] / 2)
+    x1 = int(point[0] + offset[0] + dim[0] / 2)
+    y0 = int(point[1] + offset[1] - dim[1] / 2)
+    y1 = int(point[1] + offset[1] + dim[1] / 2)
+
+    disegna_rettangolo(image_output, (x0, y1), (x1, y0), 1, "green")
+
+    zone = image_input[y0:y1, x0:x1]
+
+    if cache['DEBUG']:
+        msg = f"max {np.max(zone)}, mean {int(np.mean(zone))}"
+        cv2.putText(image_output, msg, (5, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
+
+    return np.mean(zone)

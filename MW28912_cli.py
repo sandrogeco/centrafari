@@ -2,7 +2,9 @@ import sys
 import cv2
 import json
 
-from funcs import rileva_punto_angoloso, preprocess
+from funcs_misc import preprocess
+from funcs_anabbagliante import rileva_punto_angoloso
+
 
 if __name__ == "__main__":
     tipo_faro = sys.argv[1]

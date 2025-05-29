@@ -48,7 +48,10 @@ send_script() {
         MW28912.py \
         camera.py \
         comms.py \
-        funcs.py \
+        funcs_anabbagliante.py \
+        funcs_abbagliante.py \
+        funcs_luminosita.py \
+        funcs_misc.py \
         utils.py \
         config_anabbagliante.json \
         config_abbagliante.json \
@@ -74,7 +77,10 @@ send_script() {
         MW28912.py \
         camera.py \
         comms.py \
-        funcs.py \
+        funcs_anabbagliante.py \
+        funcs_abbagliante.py \
+        funcs_luminosita.py \
+        funcs_misc.py \
         utils.py \
         config_anabbagliante.json \
         config_abbagliante.json \
