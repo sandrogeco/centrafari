@@ -50,6 +50,7 @@ def rileva_punto_angoloso(image_input, image_output, cache):
     # Analisi contorno
     delta = 20
     punti = []
+    angoli = []
 
     OFFSET_Y = 5
 
@@ -72,11 +73,19 @@ def rileva_punto_angoloso(image_input, image_output, cache):
         v_succ = (x_succ, y_succ + OFFSET_Y)
 
         angolo = -angolo_esterno_vettori(differenza_vettori(v_prec, v), differenza_vettori(v_succ, v))
+        angoli.append(angolo)
 
-        v_prec_verso_alto = angolo_vettori((1, 0), differenza_vettori(v_prec, v)) > 0
-
-        if 12 < angolo < 18 and v_prec_verso_alto:
+        range_angoli = cache.get('range_angoli', [10, 20])
+        if range_angoli[0] < angolo < range_angoli[1]:
             punti.append(v)
+            if cache['DEBUG']:
+                cv2.putText(image_output, f"{int(angolo)}", (v[0], v[1] + 30 + int(20 * np.sin(60 * v[0] * 180 / np.pi))), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
+        else:
+            if cache['DEBUG']:
+                disegna_pallino(image_output, v, 2, 'red', -1)
+                cv2.putText(image_output, f"{int(angolo)}", (v[0], v[1] + 30 + int(20 * np.sin(60 * v[0] * 180 / np.pi))), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('red'), 1)
+
+    cache['range_angoli'] = [int(np.max(angoli)) - 4, int(np.max(angoli)) + 1]
 
     # Rimuovo i punti che sono troppo vicini alle estremita' del contour
     min_contour_x = np.min(contour[:, 0, 0])
