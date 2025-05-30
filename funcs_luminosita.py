@@ -13,6 +13,8 @@ def calcola_lux(image_input, image_output, point, offset, dim, cache):
     disegna_rettangolo(image_output, (x0, y1), (x1, y0), 1, "green")
 
     zone = image_input[y0:y1, x0:x1]
+    if len(zone) == 0:
+     return 0
 
     if cache['DEBUG']:
         msg = f"max {np.max(zone)}, mean {int(np.mean(zone))}"
