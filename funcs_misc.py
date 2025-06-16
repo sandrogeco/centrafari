@@ -12,9 +12,14 @@ def preprocess(image, cache):
     height, width = image.shape[:2]
 
     # Ritaglia immagine
+    crop_center = config.get('crop_center', [width/2, height/2])
     crop_w = config['crop_w']
     crop_h = config['crop_h']
-    image = image[int(height/2 - crop_h/2):int(height/2 + crop_h/2), int(width/2 - crop_w/2):int(width/2 + crop_w/2)]
+    start_y = max(int(crop_center[1] - crop_h / 2), 0)
+    end_y = int(start_y + crop_h)
+    start_x = max(int(crop_center[0] - crop_w / 2), 0)
+    end_x = int(start_x + crop_w)
+    image = image[start_y : end_y, start_x : end_x]
 
     # Stira immagine
     image = cv2.resize(image, (0, 0), fx=1.0 * config['width'] / config['crop_w'], fy=1.0 * config['height'] / config['crop_h'])

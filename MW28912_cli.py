@@ -7,7 +7,7 @@ from funcs_anabbagliante import rileva_punto_angoloso
 
 
 if __name__ == "__main__":
-    tipo_faro = sys.argv[1]
+    tipo_faro = sys.argv[1].lower()
     path_image = sys.argv[2]
 
     # Carica la configurazione

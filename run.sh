@@ -10,12 +10,13 @@ display_usage() {
     echo
     echo "I possibili parametri impostabili sono:"
     echo "   TARGET_IP"
+    echo "   TARGET_SSH_PORT"
     echo "   TIPO_FARO=<anabbagliante | abbagliante | fendinebbia>"
     echo "   TARGET_DESTINATION_FOLDER"
     echo "   USA_EMULATORE=<y | n>"
     echo "   PORTA_SERVER_PROTEUS"
     echo "Le azioni possibili sono:"
-    echo "   kill, send, force_send, run, remotelog (visualizza l'ultimo log sul target)"
+    echo "   kill, send, force_send, run, run_centra_telecamera, remotelog (visualizza l'ultimo log sul target)"
     echo
     echo "Esempio di invocazione per inviare e avviare lo script sul target:"
     echo "run.sh TARGET_IP=192.168.25.111 TIPO_FARO=anabbagliante send run kill"
@@ -30,6 +31,7 @@ kill_script() {
     # shellcheck disable=SC2087
     ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" >/dev/null 2>&1 <<EOF
         echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912.py" || true
+        echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912_centra_telecamera.py" || true
         echo 1234 | sudo -S pkill -9 MW28912 || true
         echo 1234 | sudo -S pkill -15 "emulatore_proteus.py" || true
         echo 1234 | sudo -S pkill -15 "usb_video_capture_cm4" || true
@@ -46,6 +48,7 @@ send_script() {
     # Trasferisci tutti i file che servono al funzionamento dello script
     for file in \
         MW28912.py \
+        MW28912_centra_telecamera.py \
         camera.py \
         comms.py \
         funcs_anabbagliante.py \
@@ -75,6 +78,7 @@ send_script() {
     # Salva i checksum dei file appena trasferiti
     md5sum \
         MW28912.py \
+        MW28912_centra_telecamera.py \
         camera.py \
         comms.py \
         funcs_anabbagliante.py \
@@ -89,14 +93,12 @@ send_script() {
         >/tmp/checksum_file_centrafari.txt
 }
 
-run_script() {
-    # Avvia gli script
-    echo "*** run_script"
+run_allineamento() {
+    echo "*** run_allineamento"
 
     # shellcheck disable=SC2087
     ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" <<EOF
         echo -e "\n\n\n\n"
-        echo 1234 | sudo -S rm -f /tmp/all_msgs.txt
 
         # Avvia l'emulatore e lo script della telecamera
         set -x
@@ -105,6 +107,20 @@ run_script() {
         fi
 
         DISPLAY=:0 nice -n 0 python3 $PROFILE_ARGS "$TARGET_DESTINATION_FOLDER/MW28912.py" "$TIPO_FARO" $PORTA_SERVER_PROTEUS
+        set +x
+EOF
+}
+
+run_centra_telecamera() {
+    echo "*** run_centra_telecamera"
+
+    # shellcheck disable=SC2087
+    ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" <<EOF
+        echo -e "\n\n\n\n"
+
+        # Avvia l'emulatore e lo script della telecamera
+        set -x
+        DISPLAY=:0 nice -n 0 python3 "$TARGET_DESTINATION_FOLDER/MW28912_centra_telecamera.py" "$TIPO_FARO"
         set +x
 EOF
 }
@@ -187,8 +203,11 @@ for arg in "$@"; do
         rm -f /tmp/checksum_file_centrafari.txt
         send_script
         ;;
-    "run")
-        run_script
+    "run" | "run_allineamento")
+        run_allineamento
+        ;;
+    "run_centra_telecamera")
+        run_centra_telecamera
         ;;
     "remotelog")
         view_remote_log

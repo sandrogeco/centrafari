@@ -21,7 +21,7 @@ from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
 from camera import set_camera, apri_camera
 from comms import thread_comunicazione
-from utils import uccidi_processo
+from utils import uccidi_processo, get_colore
 
 
 def show_frame(video, cache, lmain):
@@ -38,7 +38,7 @@ def show_frame(video, cache, lmain):
     image_input = preprocess(image_input, cache)
 
     image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
-    if cache['tipo_faro'] == 'anabbagliante':
+    if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
         image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
         lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
     elif cache['tipo_faro'] == 'abbagliante':
@@ -62,7 +62,9 @@ def show_frame(video, cache, lmain):
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux })
 
     if cache['DEBUG']:
-        logging.debug(f"Durata elaborazione: {1000 * (time.monotonic() - t0)} ms, fps = {1 / (t0 - cache.get('t0', 0))}")
+        msg = f"Durata elaborazione: {int(1000 * (time.monotonic() - t0))} ms, fps = {int(1 / (t0 - cache.get('t0', 0)))}"
+        logging.debug(msg)
+        cv2.putText(image_output, msg, (5, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
         cache['t0'] = t0
 
     img = PIL.Image.fromarray(image_output)
