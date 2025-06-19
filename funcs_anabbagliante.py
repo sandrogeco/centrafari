@@ -91,6 +91,9 @@ def rileva_punto_angoloso(image_input, image_output, cache):
     min_contour_x = np.min(contour[:, 0, 0])
     max_contour_x = np.max(contour[:, 0, 0])
     range_contour_x = max_contour_x - min_contour_x
+    disegna_pallino(image_output, punti[0], 2, 'blue', -1)
+    disegna_pallino(image_output, punti[-1], 2, 'blue', -1)
+    puntii=punti.copy()
     punti = [p for p in punti if min_contour_x + (0.05 * range_contour_x) < p[0] < max_contour_x - (0.05 * range_contour_x)]
 
     if len(punti) == 0:

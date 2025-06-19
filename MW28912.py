@@ -24,20 +24,35 @@ from comms import thread_comunicazione
 from utils import uccidi_processo, get_colore
 
 
-def show_frame(video, cache, lmain):
+def show_frame( cache, lmain):
     if cache['DEBUG']:
         t0 = time.monotonic()
 
     image_input = cv2.imread("/tmp/frame.jpg")
 
     if image_input is None:
-        lmain.after(10, lambda: show_frame(video, cache, lmain))
+        lmain.after(10, lambda: show_frame( cache, lmain))
         return
+    stato_comunicazione = cache['stato_comunicazione']
 
-    image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
+
     image_input = preprocess(image_input, cache)
+    #image_output= cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+#    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+    if stato_comunicazione.get('pattern',0)==0:
+        #image_output = cv2.applyColorMap(image_input.copy(), cv2.COLOR_BGR2GRAY)
+        image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
+        image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+    if stato_comunicazione.get('pattern',0)==1:
+        image_output = cv2.applyColorMap(image_input.copy(), cv2.COLOR_BGR2GRAY)
+        image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
+    if stato_comunicazione.get('pattern',0)==2:
+        image_output = cv2.applyColorMap(255-image_input.copy(), cv2.COLORMAP_JET)
+        image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
 
-    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+
+    logging.debug(f"[PT] {stato_comunicazione.get('pattern',0)}")
+
     if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
         image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
         lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
@@ -45,8 +60,6 @@ def show_frame(video, cache, lmain):
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
         lux = calcola_lux(image_output, image_output, point, (0, 0), (50, 50), cache) if point else 0
 
-    stato_comunicazione = cache['stato_comunicazione']
-    logging.debug(stato_comunicazione)
 
     if stato_comunicazione.get('croce', 0) == 1:
         visualizza_croce_riferimento(
@@ -71,7 +84,7 @@ def show_frame(video, cache, lmain):
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
-    lmain.after(5, lambda: show_frame(video, cache, lmain))
+    lmain.after(5, lambda: show_frame(cache, lmain))
 
 
 def cleanup(p):
@@ -119,40 +132,44 @@ if __name__ == "__main__":
 
     cache = {
         "DEBUG": config.get("DEBUG") or False,
+        "CAMERA":config.get("CAMERA") or False,
+        "COMM":config.get("COMM") or False,
         "config": config,
         "stato_comunicazione": {},
         "queue": Queue(),
         "tipo_faro": tipo_faro,
     }
 
-    threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
+    if cache['COMM']:
+        threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
 
-    indice_camera, video = apri_camera()
-    if video is None:
-        logging.error("Nessuna telecamera trovata! Uscita")
-        sys.exit(1)
-    video.release()
-    set_camera(indice_camera, config)
+    if cache['CAMERA']:
+        indice_camera, video = apri_camera()
+        if video is None:
+            logging.error("Nessuna telecamera trovata! Uscita")
+            sys.exit(1)
+        video.release()
+        set_camera(indice_camera, config)
 
-    # Avvia la cattura delle immagini
-    time.sleep(1)
-    process_video_capture = subprocess.Popen(
-        f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera} &>/tmp/usb_video_capture_cm4.log",
-        shell=True,
-        preexec_fn=os.setsid,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    atexit.register(partial(cleanup, process_video_capture))
-    logging.debug("Cattura avviata")
+        # Avvia la cattura delle immagini
+        time.sleep(1)
+        process_video_capture = subprocess.Popen(
+            f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera} &>/tmp/usb_video_capture_cm4.log",
+            shell=True,
+            preexec_fn=os.setsid,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        atexit.register(partial(cleanup, process_video_capture))
+        logging.debug("Cattura avviata")
 
-    def _sig_handler(signum, frame):
-        cleanup(process_video_capture)
-        sys.exit(0)
+        def _sig_handler(signum, frame):
+            cleanup(process_video_capture)
+            sys.exit(0)
 
-    for s in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(s, _sig_handler)
+        for s in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(s, _sig_handler)
 
     # Imposta la finestra
     root = tk.Tk()
@@ -162,5 +179,5 @@ if __name__ == "__main__":
     lmain = tk.Label(root)
     lmain.pack()
 
-    show_frame(video, cache, lmain)
+    show_frame(cache, lmain)
     root.mainloop()

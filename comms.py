@@ -5,7 +5,7 @@ import logging
 def decode_cmd(resp):
     stato_comunicazione = {}
     if resp.startswith("CFG->"):
-        # stato_comunicazione['pattern'] = int(resp[5])
+        stato_comunicazione['pattern'] = int(resp[5])
         stato_comunicazione['croce'] = int(resp[6])
         stato_comunicazione['TOV'] = int(resp[10:13])
         # stato_comunicazione['mpx'] = float(resp[16:24])
