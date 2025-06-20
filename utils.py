@@ -79,6 +79,24 @@ def disegna_linea(frame, punti, spessore, colore):
     for i in range(0, len(punti) - 1):
         disegna_segmento(frame, punti[i], punti[i + 1], spessore, colore)
 
+def disegna_linea_inf(frame, punti, spessore, colore):
+    m=(punti[1][1]-punti[0][1])/(punti[1][0]-punti[0][0])
+    q=punti[0][1]-m*punti[0][0]
+    if punti[1][0]>punti[0][0]:
+        disegna_segmento(frame, (0,q), punti[1], spessore, colore)
+    else:
+        disegna_segmento(frame, (frame.shape[1],m*frame.shape[1]+q), punti[1], spessore, colore)
+
+def disegna_linea_angolo(frame,punto,angolo,spessore,colore):
+    m=np.tan(np.deg2rad(angolo))
+   # q = punto[1] - m * punto[0]
+    if (angolo>90)and(angolo<270):
+        x=0
+    else:
+        x=frame.shape[1]
+    disegna_segmento(frame, punto,(x,- m*(x-punto[0])+punto[1]), spessore, colore)
+
+
 
 def disegna_rettangolo(frame, punto_ll, punto_ur, spessore, colore):
     min_x = punto_ll[0]

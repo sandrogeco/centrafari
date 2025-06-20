@@ -3,7 +3,7 @@ import cv2
 import logging
 
 from utils import get_colore_bgr, get_colore, angolo_vettori, find_y_by_x, \
-    angolo_esterno_vettori, differenza_vettori, disegna_pallino
+    angolo_esterno_vettori, differenza_vettori, disegna_pallino, disegna_linea, disegna_linea_inf, disegna_linea_angolo
 
 
 def rileva_contorno(image, cache):
@@ -91,9 +91,7 @@ def rileva_punto_angoloso(image_input, image_output, cache):
     min_contour_x = np.min(contour[:, 0, 0])
     max_contour_x = np.max(contour[:, 0, 0])
     range_contour_x = max_contour_x - min_contour_x
-    disegna_pallino(image_output, punti[0], 2, 'blue', -1)
-    disegna_pallino(image_output, punti[-1], 2, 'blue', -1)
-    puntii=punti.copy()
+
     punti = [p for p in punti if min_contour_x + (0.05 * range_contour_x) < p[0] < max_contour_x - (0.05 * range_contour_x)]
 
     if len(punti) == 0:
@@ -101,9 +99,27 @@ def rileva_punto_angoloso(image_input, image_output, cache):
 
     for punto in punti:
         disegna_pallino(image_output, punto, 2, 'green', -1)
+    disegna_pallino(image_output, punti[0], 2, 'blue', -1)
+    disegna_pallino(image_output, punti[-1], 2, 'blue', -1)
 
     punto_finale = tuple(np.median(punti, axis=0).astype(np.int32))
+    disegna_linea_inf(image_output, (punti[0],punto_finale),1,'red')
+    disegna_linea_inf(image_output, (punti[-1], punto_finale), 1, 'red')
 
+
+    disegna_linea_angolo(image_output,(int(cache['config']['width'] / 2),
+                                        int(cache['config']['height'] / 2)+cache['stato_comunicazione'].get('inclinazione', 0)
+                                        -cache['stato_comunicazione'].get('TOH', 50)),15,1,'green')
+    disegna_linea_angolo(image_output, (int(cache['config']['width'] / 2),
+                                         int(cache['config']['height'] / 2) +cache['stato_comunicazione'].get('inclinazione', 0)
+                                         + cache['stato_comunicazione'].get('TOH',50)), 15,1, 'green')
+
+    disegna_linea_angolo(image_output,(int(cache['config']['width'] / 2),
+                                        int(cache['config']['height'] / 2)+cache['stato_comunicazione'].get('inclinazione', 0)
+                                        -cache['stato_comunicazione'].get('TOH', 50)),180,1,'green')
+    disegna_linea_angolo(image_output, (int(cache['config']['width'] / 2),
+                                         int(cache['config']['height'] / 2) +cache['stato_comunicazione'].get('inclinazione', 0)
+                                         + cache['stato_comunicazione'].get('TOH',50)), 180,1, 'green')
     if 'numero_medie_punto' in cache['config']:
         cache['lista_ultimi_punti'] = cache.get('lista_ultimi_punti', []) + [punto_finale]
         cache['lista_ultimi_punti'] = cache['lista_ultimi_punti'][-cache['config']['numero_medie_punto']:]
