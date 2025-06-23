@@ -22,7 +22,7 @@ def rileva_contorno(image, cache):
     # fuori e' meno influenzato dalla haze nell'immagine e piu' vicino al bordo vero
     _, binary_image = cv2.threshold(image1, 0, 255, cv2.THRESH_OTSU)
 
-    edges = cv2.Canny(binary_image, 50, 150)
+    edges = cv2.Canny(binary_image, 50, 300)
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
         logging.debug("   contours vuoto")
@@ -103,8 +103,11 @@ def rileva_punto_angoloso(image_input, image_output, cache):
     disegna_pallino(image_output, punti[-1], 2, 'blue', -1)
 
     punto_finale = tuple(np.median(punti, axis=0).astype(np.int32))
-    disegna_linea_inf(image_output, (punti[0],punto_finale),1,'red')
-    disegna_linea_inf(image_output, (punti[-1], punto_finale), 1, 'red')
+    try:
+        disegna_linea_inf(image_output, (punti[0],punto_finale),1,'red')
+        disegna_linea_inf(image_output, (punti[-1], punto_finale), 1, 'red')
+    except:
+        pass
 
 
     disegna_linea_angolo(image_output,(int(cache['config']['width'] / 2),

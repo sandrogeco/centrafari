@@ -1,7 +1,7 @@
 {
-    "DEBUG": true,
-    "CAMERA": false,
-    "COMM": false,
+    "DEBUG": false,
+    "CAMERA": true,
+    "COMM": true,
 
     "width": 630,
     "height": 320,
