@@ -1,5 +1,7 @@
 import sys
 import tkinter as tk
+from sqlite3 import enable_callback_tracebacks
+
 import PIL
 from PIL import ImageTk
 import time
@@ -95,9 +97,18 @@ if __name__ == "__main__":
     with open(os.path.join(percorso_script, f"config_{tipo_faro}.json"), "r") as f:
         config = json.load(f)
 
-    del config["crop_center"]
-    del config["crop_w"]
-    del config["crop_h"]
+    try:
+        del config["crop_center"]
+    except:
+        pass
+    try:
+        del config["crop_w"]
+    except:
+        pass
+    try:
+        del config["crop_h"]
+    except:
+        pass
 
     indice_camera, video = apri_camera()
     if video is None:

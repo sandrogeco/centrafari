@@ -109,10 +109,10 @@ def rileva_punto_angoloso(image_input, image_output, cache):
     except:
         pass
 
-
     disegna_linea_angolo(image_output,(int(cache['config']['width'] / 2),
                                         int(cache['config']['height'] / 2)+cache['stato_comunicazione'].get('inclinazione', 0)
                                         -cache['stato_comunicazione'].get('TOH', 50)),15,1,'green')
+
     disegna_linea_angolo(image_output, (int(cache['config']['width'] / 2),
                                          int(cache['config']['height'] / 2) +cache['stato_comunicazione'].get('inclinazione', 0)
                                          + cache['stato_comunicazione'].get('TOH',50)), 15,1, 'green')

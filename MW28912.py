@@ -55,10 +55,15 @@ def show_frame( cache, lmain):
 
     if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
         image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
-        lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
+    #    lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
-        lux = calcola_lux(image_output, image_output, point, (0, 0), (50, 50), cache) if point else 0
+
+    lux = calcola_lux(image_output, image_output, point, (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
+                      (cache['config']['lux_w'], cache['config']['lux_h']), cache) if point \
+        else calcola_lux(image_output, image_output, (cache['config']['width']/2,cache['config']['height']/2), (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
+                (cache['config']['lux_w'], cache['config']['lux_h']), cache)
+
 
 
     if stato_comunicazione.get('croce', 0) == 1:
@@ -73,6 +78,8 @@ def show_frame( cache, lmain):
     if point:
         disegna_punto(image_output, point, cache)
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux })
+    else:
+        cache['queue'].put({'posiz_pattern_x': 0, 'posiz_pattern_y': 0, 'lux': lux})
 
     if cache['DEBUG']:
         msg = f"Durata elaborazione: {int(1000 * (time.monotonic() - t0))} ms, fps = {int(1 / (t0 - cache.get('t0', 0)))}"

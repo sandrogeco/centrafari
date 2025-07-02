@@ -1,5 +1,5 @@
 {
-    "DEBUG": false,
+    "DEBUG": true,
     "CAMERA": true,
     "COMM": true,
 
@@ -18,6 +18,11 @@
     "exposure_absolute": 400,
 
     "numero_medie_punto": 5,
+    "lux_sft_x": 20,
+    "lux_sft_y": 20,
+    "lux_w": 10,
+    "lux_h": 10,
+
 
     "port": 28500
 }
