@@ -33,6 +33,8 @@ kill_script() {
         echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912.py" || true
         echo 1234 | sudo -S pkill -15 -f "$TARGET_DESTINATION_FOLDER/MW28912_centra_telecamera.py" || true
         echo 1234 | sudo -S pkill -9 MW28912 || true
+        echo 1234 | sudo -S pkill -9 mw28912 || true
+
         echo 1234 | sudo -S pkill -15 "emulatore_proteus.py" || true
         echo 1234 | sudo -S pkill -15 "usb_video_capture_cm4" || true
         echo 1234 | sudo -S rm -f /tmp/frame.jpg
@@ -136,6 +138,17 @@ view_remote_log() {
 EOF
 }
 
+view_remote_ctr_log() {
+    echo "*** view_remote_ctr_log"
+    ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" <<'EOF'
+        echo -e "\n\n\n\n"
+        last_log=$(find /tmp/ -type f -name 'MW28912py_centra_telecamerapy_log_*.log' 2>/dev/null | sort -r | head -1)
+
+        echo -e "Visualizzazione log: $last_log\n\n"
+        tail -f "$last_log"
+EOF
+}
+
 # ##############################################################################
 
 ROOT_DIR="$(
@@ -210,6 +223,9 @@ for arg in "$@"; do
         run_centra_telecamera
         ;;
     "remotelog")
+        view_remote_log
+        ;;
+    "remotectrlog")
         view_remote_log
         ;;
 
