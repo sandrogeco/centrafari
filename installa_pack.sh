@@ -1,5 +1,11 @@
 #!/bin/bash
 
+
+sudo apt install /home/pi/pack/modules/*.deb
+
+sudo ln -s /usr/bin/pip3 /usr/bin/pip3.9
+
+
 echo "📦 INSTALLA PACK - installazione offline dei pacchetti Python"
 
 # Verifica che pip sia presente
@@ -23,7 +29,7 @@ if [ ! -f "pack/requirements.txt" ] || [ ! -d "pack/packages" ]; then
 fi
 
 echo "🚀 Installazione pacchetti da 'pack/packages/' (offline)..."
-pip3 install --no-index --find-links=pack/packages -r pack/requirements.txt
+pip3 install --user --no-index --find-links=pack/packages -r pack/requirements.txt
 
 if [ $? -eq 0 ]; then
     echo "✅ Tutti i pacchetti sono stati installati correttamente!"

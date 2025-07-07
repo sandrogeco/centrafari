@@ -59,9 +59,9 @@ def show_frame( cache, lmain):
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
 
-    lux = calcola_lux(image_output, image_output, point, (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
+    lux = calcola_lux(image_input, image_output, point, (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
                       (cache['config']['lux_w'], cache['config']['lux_h']), cache) if point \
-        else calcola_lux(image_output, image_output, (cache['config']['width']/2,cache['config']['height']/2), (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
+        else calcola_lux(image_input, image_output, (cache['config']['width']/2,cache['config']['height']/2), (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
                 (cache['config']['lux_w'], cache['config']['lux_h']), cache)
 
 

@@ -41,7 +41,7 @@ def show_frame(video, cache, lmain):
 
         # Segnala che la procedura e' terminata
         cache["OK"] = True
-
+    logging.info("xxxx"+str(cache["crop_w"]))
     if not cache["crop_center"]:
         cv2.putText(image_input, "Clicca sul punto che dovra' essere", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
         cv2.putText(image_input, "al centro del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
@@ -152,7 +152,7 @@ if __name__ == "__main__":
             config = json.load(f)
 
         if not cache["crop_center"]:
-            config["crop_center"] = [event.x, event.y]
+            config["crop_center"] = (event.x, event.y)
             cache["crop_center"] = config["crop_center"]
         elif not cache["crop_w"] or not cache["crop_h"]:
             config["crop_w"] = 300

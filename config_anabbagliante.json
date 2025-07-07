@@ -1,6 +1,6 @@
 {
     "DEBUG": true,
-    "CAMERA": true,
+    "CAMERA": false,
     "COMM": true,
 
     "width": 630,

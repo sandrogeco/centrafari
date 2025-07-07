@@ -63,11 +63,13 @@ send_script() {
         assets/usb_video_capture_cm4 \
         ; do
         # Trasferisci solo i file effettivamente cambiati dall'ultimo invio
-        if ! grep -q "$(md5sum "$file" | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
+#        if ! grep -q "$(md5sum "$file" | cut -d' ' -f1)" /tmp/checksum_file_centrafari.txt; then
+ #           scp -P "$TARGET_SSH_PORT" $file pi@"$TARGET_IP":"$TARGET_DESTINATION_FOLDER"
+#        else
+#            echo "Skip send $file to $TARGET_IP"
+#        fi
             scp -P "$TARGET_SSH_PORT" $file pi@"$TARGET_IP":"$TARGET_DESTINATION_FOLDER"
-        else
-            echo "Skip send $file to $TARGET_IP"
-        fi
+
     done
 
     # Trasferisci l'emulatore
