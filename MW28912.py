@@ -16,7 +16,7 @@ from datetime import datetime
 import logging
 
 from funcs_misc import preprocess, visualizza_croce_riferimento, disegna_punto
-from funcs_anabbagliante import rileva_punto_angoloso
+from funcs_anabbagliante import rileva_punto_angoloso,rileva_punto_angoloso1
 from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
 from camera import set_camera, apri_camera
@@ -54,7 +54,7 @@ def show_frame( cache, lmain):
     logging.debug(f"[PT] {stato_comunicazione.get('pattern',0)}")
 
     if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
-        image_output, point, _ = rileva_punto_angoloso(image_input, image_output, cache)
+        image_output, point, _ = rileva_punto_angoloso1(image_input, image_output, cache)
     #    lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
