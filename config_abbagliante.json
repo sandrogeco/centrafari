@@ -16,11 +16,13 @@
     "brightness": 0,
     "contrast": 100,
     "saturation": 0,
-    "exposure_absolute": 40,
+    "exposure_absolute": 10000,
     "lux_sft_x": 0,
     "lux_sft_y": 0,
     "lux_w": 10,
     "lux_h": 10,
 
+    "cam_g":2.2e-1,
+    "cam_c":0,
     "port": 28500
 }

@@ -19,7 +19,7 @@ from funcs_misc import preprocess, visualizza_croce_riferimento, disegna_punto
 from funcs_anabbagliante import rileva_punto_angoloso,rileva_punto_angoloso1
 from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
-from camera import set_camera, apri_camera
+from camera import set_camera, apri_camera, autoexp
 from comms import thread_comunicazione
 from utils import uccidi_processo, get_colore
 
@@ -35,8 +35,9 @@ def show_frame( cache, lmain):
         return
     stato_comunicazione = cache['stato_comunicazione']
 
-
     image_input = preprocess(image_input, cache)
+    if cache['CAMERA']:
+        autoexp(image_input, cache)
     #image_output= cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
 #    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==0:
@@ -146,6 +147,7 @@ if __name__ == "__main__":
         "queue": Queue(),
         "tipo_faro": tipo_faro,
     }
+    cache['config']['exposure_absolute']=10000
 
     if cache['COMM']:
         threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
@@ -155,8 +157,9 @@ if __name__ == "__main__":
         if video is None:
             logging.error("Nessuna telecamera trovata! Uscita")
             sys.exit(1)
+        cache['config']['indice_camera']=indice_camera
         video.release()
-        set_camera(indice_camera, config)
+        set_camera(indice_camera, cache['config'])
 
         # Avvia la cattura delle immagini
         time.sleep(1)

@@ -1,8 +1,10 @@
 import os
+import time
+
 import cv2
 import logging
 import numpy as np
-
+from utils import disegna_rettangolo, get_colore
 
 def apri_camera():
     for i in range(11):
@@ -25,10 +27,25 @@ def set_camera(i, config):
     except Exception as e:
         logging.error(f"error: {e}")
 
-def autoexp(i,image_input):
-    logging.info(f"autoexp /dev/video{i}")
+def autoexp(image_input,cache):
     try:
         r=np.max(image_input)
-        os.system(f"v4l2-ctl --device /dev/video{i} --set-ctrl=exposure_auto={config['exposure_auto']}")
+      #  logging.debug(f"cache-config: {cache['config']}")
+        exp_old=cache['config']['exposure_absolute']
+        if r>230:
+            cache['config']['exposure_absolute']=cache['config']['exposure_absolute']*0.9
+        if r <210:
+            cache['config']['exposure_absolute'] = cache['config']['exposure_absolute'] * 1.1
+        logging.debug(f"exp: {cache['config']['exposure_absolute']}")
+        if cache['config']['exposure_absolute']<50:
+            cache['config']['exposure_absolute']=50
+        if cache['config']['exposure_absolute'] >10000:
+            cache['config']['exposure_absolute'] = 10000
+        if exp_old!=cache['config']['exposure_absolute']:
+                os.system(f"v4l2-ctl --device /dev/video{cache['config']['indice_camera']} --set-ctrl=exposure_absolute={cache['config']['exposure_absolute']}")
+                time.sleep(0.25)
+                cv2.putText(image_input, "calcolo autoespozione in corso", (5, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
+
+
     except Exception as e:
         logging.error(f"error: {e}")

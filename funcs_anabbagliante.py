@@ -43,6 +43,7 @@ def rileva_punto_angoloso(image_input, image_output, cache):
         return image_input, None, '[rileva_punto_angoloso] contour is None'
 
     if cache['DEBUG']:
+
         cv2.drawContours(image_output, [contour], -1, get_colore_bgr('red'), 1)
         msg = f"clipping: {np.sum(image_input >= 255) / AREA}%, Max level: {np.max(image_input)}"
         cv2.putText(image_output, msg, (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
@@ -132,6 +133,29 @@ def rileva_punto_angoloso(image_input, image_output, cache):
 
     return image_output, punto_finale, None
 
+def curv_ch(image_output,contour):
+
+
+    dx = np.gradient(contour[:, 0])
+    dy = np.gradient(contour[:, 1])
+    ddx = np.gradient(dx)
+    ddy = np.gradient(dy)
+
+    # Curvatura discreta
+    curvature = (dx * ddy - dy * ddx) / (dx ** 2 + dy ** 2) ** 1.5
+
+    # Trova cambi di segno nella curvatura
+    sign_changes = np.where(np.diff(np.sign(curvature)))[0]
+
+    for s in sign_changes:
+        logging.debug(f"sign:{contour[s - 1]}")
+        try:
+            disegna_pallino(image_output, (contour[s-1][0],contour[s-1][1]), 2, 'red', -1)
+        except:
+            pass
+    #print('x')
+
+
 
 def rileva_punto_angoloso1(image_input, image_output, cache):
     WIDTH_PIXEL = image_input.shape[1]
@@ -143,9 +167,25 @@ def rileva_punto_angoloso1(image_input, image_output, cache):
         return image_input, None, '[rileva_punto_angoloso] contour is None'
 
     if cache['DEBUG']:
-        cv2.drawContours(image_output, [contour], -1, get_colore_bgr('red'), 1)
+        image_tmp = image_input.copy()
+        cv2.normalize(image_input, image_tmp, 0, 255, cv2.NORM_MINMAX)
+        image_tmp = cv2.GaussianBlur(image_tmp, (11, 11), sigmaX=0.0)
+        image_tmp[image_tmp < 100] = 0
+
+
+        contours, _ = cv2.findContours(image_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour1 = max(contours, key=lambda d: cv2.contourArea(d))
+      #  cv2.drawContours(image_output, [contour1], -1, get_colore('green'), 1)
+
+        epsilon = 0.0005 * cv2.arcLength(contour1, True)
+        approx = cv2.approxPolyDP(contour1, epsilon, closed=True)
+        approx = approx.reshape(-1, 2)
+        cv2.drawContours(image_output, [approx], -1, get_colore('blue'), 1)
+        curv_ch(image_output,approx)
+       # cv2.drawContours(image_output, [contour], -1, get_colore('red'), 1)
         msg = f"clipping: {np.sum(image_input >= 255) / AREA}%, Max level: {np.max(image_input)}"
         cv2.putText(image_output, msg, (5, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
+        return image_output, None, None
 
     # Analisi contorno
     delta = 20
