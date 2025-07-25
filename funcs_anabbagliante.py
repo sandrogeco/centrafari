@@ -169,9 +169,11 @@ def rileva_punto_angoloso1(image_input, image_output, cache):
     if cache['DEBUG']:
         image_tmp = image_input.copy()
         cv2.normalize(image_input, image_tmp, 0, 255, cv2.NORM_MINMAX)
-        image_tmp = cv2.GaussianBlur(image_tmp, (11, 11), sigmaX=0.0)
-        image_tmp[image_tmp < 100] = 0
 
+        image_tmp[image_tmp < 150] = 0
+        #image_tmp[image_tmp >= 100] = 255
+        image_tmp = cv2.GaussianBlur(image_tmp, (11, 11), sigmaX=0.0)
+        image_output=image_tmp
 
         contours, _ = cv2.findContours(image_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contour1 = max(contours, key=lambda d: cv2.contourArea(d))
