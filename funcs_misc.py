@@ -38,7 +38,7 @@ def disegna_punto(image_output, point, cache):
     is_punto_centrato = (width / 2 - toh) <= point[0] <= (width / 2 + toh) \
         and (height / 2 - tov + inclinazione) <= point[1] <= (height / 2 + tov + inclinazione)
 
-    disegna_pallino(image_output, point, 10, 'green' if is_punto_centrato else 'red', -1)
+    #disegna_pallino(image_output, point, 10, 'green' if is_punto_centrato else 'red', 1)
 
 
 def visualizza_croce_riferimento(frame, x, y, width, heigth):

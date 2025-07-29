@@ -31,36 +31,41 @@ def two_lines(x: np.ndarray,
                  Y0 + mo * (x - X0),
                  Y0 + mi * (x - X0))
     # Dynamic visualization of current fit line
+
     try:
+        pippo
         global gray, x_data, y_data
         canvas = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         h, w = gray.shape
+        print('x:',X0,' y:',Y0,' mo:',mo,' mi:',mi)
         # endpoints
         y_left = int(round(Y0 + mo * (0 - X0)))
         y_right = int(round(Y0 + mi * (w - X0)))
-        cv2.line(canvas, (0, y_left), (w, y_right), (0, 255, 0), 1)
+        y_o=Y0+mo*(-X0)
+        y_i=Y0+mi*(w-X0)
+        #cv2.line(canvas, (0, y_left), (w, y_right), (0, 255, 0), 1)
+        cv2.line(canvas, (0, int(round(y_o))), (int(round(X0)), int(round(Y0))), (0, 255, 255), 1)
+        cv2.line(canvas, (int(round(X0)), int(round(Y0))), (w, int(round(y_i))), (255, 0, 0), 1)
         cv2.imshow('Fitting...', canvas)
-        cv2.waitKey(1)
+        cv2.waitKey(0)
     except Exception:
         pass
     return y
 
 # 4. Main fit routine
-def fit_lines(image_path: str,
+def fit_lines(image_input,image_output,
               blur_ksize: int = 5,
               canny_lo: int = 40,
               canny_hi: int = 120,
               ftol: float = 1e-8,
               xtol: float = 1e-8,
               maxfev: int = 1000,
-              debug: bool = True) -> None:
+              debug: bool = False) -> None:
     global gray, x_data, y_data
-    gray = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    if gray is None:
-        print(f"Errore: impossibile caricare '{image_path}'")
-        return
+   # image_input = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-    edges = preprocess(gray, blur_ksize, canny_lo, canny_hi)
+
+    edges = preprocess(image_input, blur_ksize, canny_lo, canny_hi)
     pts = extract_contour_points(edges)
     # split contour by vertical margins
     x_min, x_max = np.min(pts[:,0]), np.max(pts[:,0])
@@ -77,7 +82,7 @@ def fit_lines(image_path: str,
     top_pts = pts_mid[pts_mid[:,1] <= y_med]
     bot_pts = pts_mid[pts_mid[:,1] >  y_med]
     # draw both pieces
-    canvas = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
     for x,y in top_pts.astype(int): cv2.circle(canvas,(x,y),1,(255,0,255),-1)
     for x,y in bot_pts.astype(int): cv2.circle(canvas,(x,y),1,(0,255,0),-1)
     if debug:
@@ -88,15 +93,13 @@ def fit_lines(image_path: str,
     pts = top_pts
     x_data = pts[:, 0]
     y_data = pts[:, 1]
-    y_data = pts[:, 1]
-    x_data = pts[:, 0]
-    y_data = pts[:, 1]
 
-    p0 = [np.median(x_data), np.min(y_data), 0.1, 1.0]
+
+    p0 = [np.median(x_data), np.min(y_data), -0.1, -1.0]
     # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
     bounds = (
-        [np.min(x_data), 0.0,          0.0, 0.0],
-        [np.max(x_data), np.min(y_data), np.inf, np.inf]
+        [np.min(x_data), 0.0,          -np.Inf,-np.Inf],
+        [np.max(x_data), np.max(y_data), 0,0]
     )
 
     popt, _ = curve_fit(
@@ -107,8 +110,8 @@ def fit_lines(image_path: str,
     X0, Y0, mo, mi = popt
 
     # draw fitted lines extended
-    h, w = gray.shape
-    canvas = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    h, w = image_input.shape
+    canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
     ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if ctrs:
         largest = max(ctrs, key=cv2.contourArea)
@@ -124,11 +127,12 @@ def fit_lines(image_path: str,
         cv2.imshow('Fit two lines', canvas)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-    cv2.imwrite('fit_lines_result.png', canvas)
+    image_output=canvas
+   # cv2.imwrite('fit_lines_result.png', canvas)
+    return image_output,(X0,Y0)
     print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
 
-if __name__ == '__main__':
+if False:#__name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Fit two lines to contour')
     parser.add_argument('image', help='Path to grayscale image')
@@ -140,6 +144,7 @@ if __name__ == '__main__':
     parser.add_argument('--maxfev', type=int, default=1000, help='maxfev for curve_fit')
     parser.add_argument('--no-debug', action='store_true')
     args = parser.parse_args()
+    #fit lines(image, 5,40,120,1e-8,1e-8,1000)
     fit_lines(
         args.image,
         blur_ksize=args.blur,
