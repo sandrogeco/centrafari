@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     logging.info(f"Avvio MW28912.py {sys.argv}")
 
-    uccidi_processo("usb_video_capture_cm4")
+   # uccidi_processo("usb_video_capture_cm4")
 
     tipo_faro = sys.argv[1].lower()
 
@@ -156,33 +156,35 @@ if __name__ == "__main__":
         threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
 
     if cache['CAMERA']:
-        indice_camera, video = apri_camera()
-        if video is None:
-            logging.error("Nessuna telecamera trovata! Uscita")
-            sys.exit(1)
+        # indice_camera, video = apri_camera()
+        # if video is None:
+        #     logging.error("Nessuna telecamera trovata! Uscita")
+        #     sys.exit(1)
+        # cache['config']['indice_camera']=indice_camera
+        # video.release()
+        indice_camera=0
         cache['config']['indice_camera']=indice_camera
-        video.release()
         set_camera(indice_camera, cache['config'])
 
         # Avvia la cattura delle immagini
         time.sleep(1)
-        process_video_capture = subprocess.Popen(
-            f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera}",# &>/tmp/usb_video_capture_cm4.log",
-            shell=True,
-            preexec_fn=os.setsid,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        atexit.register(partial(cleanup, process_video_capture))
-        logging.debug("Cattura avviata")
+        # process_video_capture = subprocess.Popen(
+        #     f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera}",# &>/tmp/usb_video_capture_cm4.log",
+        #     shell=True,
+        #     preexec_fn=os.setsid,
+        #     stdin=subprocess.DEVNULL,
+        #     stdout=subprocess.DEVNULL,
+        #     stderr=subprocess.DEVNULL,
+        # )
+        # atexit.register(partial(cleanup, process_video_capture))
+        # logging.debug("Cattura avviata")
+        #
+        # def _sig_handler(signum, frame):
+        #     cleanup(process_video_capture)
+        #     sys.exit(0)
 
-        def _sig_handler(signum, frame):
-            cleanup(process_video_capture)
-            sys.exit(0)
-
-        for s in (signal.SIGINT, signal.SIGTERM):
-            signal.signal(s, _sig_handler)
+        # for s in (signal.SIGINT, signal.SIGTERM):
+        #     signal.signal(s, _sig_handler)
 
     # Imposta la finestra
     root = tk.Tk()

@@ -32,9 +32,50 @@ def extract_contour_points(edges: np.ndarray) -> np.ndarray:
 def two_lines(x: np.ndarray,
               X0: float, Y0: float,
               mo: float, mi: float) -> np.ndarray:
+    if (mi>mo): #y up =0!!
+        return np.full_like(x,1e6)
     y = np.where(x <= X0,
                  Y0 + mo * (x - X0),
                  Y0 + mi * (x - X0))
+    # Dynamic visualization of current fit line
+
+    try:
+        pippo
+        global gray, x_data, y_data
+        canvas = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        h, w = gray.shape
+        print('x:',X0,' y:',Y0,' mo:',mo,' mi:',mi)
+        # endpoints
+        y_left = int(round(Y0 + mo * (0 - X0)))
+        y_right = int(round(Y0 + mi * (w - X0)))
+        y_o=Y0+mo*(-X0)
+        y_i=Y0+mi*(w-X0)
+        #cv2.line(canvas, (0, y_left), (w, y_right), (0, 255, 0), 1)
+        cv2.line(canvas, (0, int(round(y_o))), (int(round(X0)), int(round(Y0))), (0, 255, 255), 1)
+        cv2.line(canvas, (int(round(X0)), int(round(Y0))), (w, int(round(y_i))), (255, 0, 0), 1)
+        cv2.imshow('Fitting...', canvas)
+        cv2.waitKey(0)
+    except Exception:
+        pass
+    return y
+
+def tre_lines(x: np.ndarray,
+              X0: float, Y0: float,X1:float,Y1:float,
+              m0: float, m1: float,m2:float) -> np.ndarray:
+    if (X1<X0)or(m1>m0):
+        return np.full_like(x,1e6)
+
+    print(X0, ' ', Y0, ' ', X1, ' ', Y1, ' ', m0, ' ', m1, ' ', m2)
+    y = np.where(
+        x <= X0,
+        Y0 + m0 * (x - X0),  # tratto 1
+        np.where(
+            x <= X1,
+            (Y0 + m0 * (X1 - X0)) + m1 * (x - X1),  # tratto 2
+            # tratto 3: continua da Y a X1
+            (Y0 + m0 * (X1 - X0)) + m1 * (X1 - X1) + m2 * (x - X1)
+        )
+    )
     # Dynamic visualization of current fit line
 
     try:
@@ -108,10 +149,12 @@ def fit_lines(image_input,image_output,
         y_data = pts[:, 1]
 
 
-        p0 = [np.median(x_data), np.min(y_data), -0.1, -1.0]
+
+
+        p0 = [np.mean(x_data), np.max(y_data)-1, -0.01, -1.0]
         # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
         bounds = (
-            [np.min(x_data), 0.0,          -np.Inf,-np.Inf],
+            [np.min(x_data), 0.0,-0.05,-np.Inf],
             [np.max(x_data), np.max(y_data), 0,0]
         )
 
@@ -120,23 +163,30 @@ def fit_lines(image_input,image_output,
             p0=p0, bounds=bounds,
             ftol=ftol, xtol=xtol, maxfev=maxfev
         )
-        X0, Y0, mo, mi = popt
+        X0, Y0, mo, mi= popt
+
 
         # draw fitted lines extended
         h, w = image_input.shape
        # canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+
+        xs = np.array([0, X0,w])
+        ys=two_lines(xs,X0,Y0,mo,mi)
+        cv2.line(image_output, (int(round(xs[0])), int(round(ys[0]))), (int(round(xs[1])), int(round(ys[1]))), (0,255,0), 1)
+        cv2.line(image_output, (int(round(xs[1])), int(round(ys[1]))), (int(round(xs[2])), int(round(ys[2]))), (0, 255, 0), 1)
+        cv2.circle(image_output,(int(round(X0)),int(round(Y0))),2,(0,255,0),2,-1)
+        [cv2.circle(image_output, (int(p[0]),int(p[1])), 1, (255, 0, 0), 1, -1) for p in top_pts]
+        #cv2.line(image_output, (int(round(xs[2])), int(round(ys[2]))), (int(round(xs[3])), int(round(ys[3]))), (0, 0, 255), 1)
+
+
+
+
+
         [cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
         ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         if ctrs:
             largest = max(ctrs, key=cv2.contourArea)
             cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
-        xs = np.array([0, X0, w])
-        ys_o = Y0 + mo * (xs - X0)
-        ys_i = Y0 + mi * (xs - X0)
-        cv2.line(image_output, (0, int(round(ys_o[0]))), (int(round(X0)), int(round(Y0))), (0,255,255), 1)
-        cv2.line(image_output, (int(round(X0)), int(round(Y0))), (w, int(round(ys_i[2]))), (255,0,0), 1)
-        cv2.circle(image_output, (int(round(X0)), int(round(Y0))), 5, (0,255,0), -1)
-
         if debug:
             cv2.imshow('Fit two lines', image_output)
             cv2.waitKey(0)

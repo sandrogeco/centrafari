@@ -20,10 +20,10 @@ from utils import uccidi_processo
 from camera import set_camera, apri_camera
 
 
-def show_frame(video, cache, lmain):
+def show_frame( cache, lmain):
     image_input = cv2.imread("/tmp/frame.jpg")
     if image_input is None:
-        lmain.after(10, lambda: show_frame(video, cache, lmain))
+        lmain.after(10, lambda: show_frame(cache, lmain))
         return
 
     if cache["crop_center"]:
@@ -56,7 +56,7 @@ def show_frame(video, cache, lmain):
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
-    lmain.after(5, lambda: show_frame(video, cache, lmain))
+    lmain.after(5, lambda: show_frame(cache, lmain))
 
 
 def cleanup(p):
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     logging.info(f"Avvio MW28912_centra_telecamera.py {sys.argv}")
 
-    uccidi_processo("usb_video_capture_cm4")
+  #  uccidi_processo("usb_video_capture_cm4")
 
     tipo_faro = sys.argv[1].lower()
 
@@ -110,32 +110,33 @@ if __name__ == "__main__":
     except:
         pass
 
-    indice_camera, video = apri_camera()
-    if video is None:
-        logging.error("Nessuna telecamera trovata! Uscita")
-        sys.exit(1)
-    video.release()
+    # indice_camera, video = apri_camera()
+    # if video is None:
+    #     logging.error("Nessuna telecamera trovata! Uscita")
+    #     sys.exit(1)
+    # video.release()
+    indice_camera=0
     set_camera(indice_camera, config)
 
     # Avvia la cattura delle immagini
-    time.sleep(1)
-    process_video_capture = subprocess.Popen(
-        f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera} &>/tmp/usb_video_capture_cm4.log",
-        shell=True,
-        preexec_fn=os.setsid,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    atexit.register(partial(cleanup, process_video_capture))
-    logging.debug("Cattura avviata")
-
-    def _sig_handler(signum, frame):
-        cleanup(process_video_capture)
-        sys.exit(0)
-
-    for s in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(s, _sig_handler)
+    # time.sleep(1)
+    # process_video_capture = subprocess.Popen(
+    #     f"/home/pi/Applications/usb_video_capture_cm4 -c 10000000 -d /dev/video{indice_camera} &>/tmp/usb_video_capture_cm4.log",
+    #     shell=True,
+    #     preexec_fn=os.setsid,
+    #     stdin=subprocess.DEVNULL,
+    #     stdout=subprocess.DEVNULL,
+    #     stderr=subprocess.DEVNULL,
+    # )
+    # atexit.register(partial(cleanup, process_video_capture))
+    # logging.debug("Cattura avviata")
+    #
+    # def _sig_handler(signum, frame):
+    #     cleanup(process_video_capture)
+    #     sys.exit(0)
+    #
+    # for s in (signal.SIGINT, signal.SIGTERM):
+    #     signal.signal(s, _sig_handler)
 
     cache = {
         "crop_center": None,
@@ -174,5 +175,5 @@ if __name__ == "__main__":
     lmain.bind("<Button-1>", callback_click)
     lmain.pack()
 
-    show_frame(video, cache, lmain)
+    show_frame( cache, lmain)
     root.mainloop()
