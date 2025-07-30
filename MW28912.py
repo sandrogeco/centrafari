@@ -38,6 +38,9 @@ def show_frame( cache, lmain):
     image_input = preprocess(image_input, cache)
     if cache['CAMERA']:
         autoexp(image_input, cache)
+    else:
+        cache['autoexp']=False
+
     #image_output= cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
 #    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==0:
@@ -56,7 +59,7 @@ def show_frame( cache, lmain):
 
     if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
        # image_output, point, _ = rileva_punto_angoloso1(image_input, image_output, cache)
-        image_output, point =fit_lines.fit_lines(image_input,image_output, 5, 40, 120, 1e-8, 1e-8, 1000)
+        image_output, point =fit_lines.fit_lines(image_input,image_output,cache, 5, 40, 120, 1e-8, 1e-8, 1000)
     #    lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)

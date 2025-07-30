@@ -47,7 +47,7 @@ def show_frame( cache, lmain):
         cv2.putText(image_input, "al centro del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
     elif not cache["crop_w"] or not cache["crop_h"]:
         cv2.putText(image_input, "Clicca sul punto che definisce il", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-        cv2.putText(image_input, "margine inferiore del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+        cv2.putText(image_input, "margine inferiore sx del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
     elif cache["OK"]:
         cv2.putText(image_input, "Clicca di nuovo per terminare", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
         cv2.putText(image_input, "la procedura", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             config["crop_center"] = (event.x, event.y)
             cache["crop_center"] = config["crop_center"]
         elif not cache["crop_w"] or not cache["crop_h"]:
-            config["crop_w"] = 300
+            config["crop_w"] = 2 * abs(event.x - cache["crop_center"][0])
             config["crop_h"] = 2 * abs(event.y - cache["crop_center"][1])
             cache["crop_w"] = config["crop_w"]
             cache["crop_h"] = config["crop_h"]

@@ -28,6 +28,7 @@ def set_camera(i, config):
         logging.error(f"error: {e}")
 
 def autoexp(image_input,cache):
+    cache['autoexp'] = False
     try:
         r=np.max(image_input)
       #  logging.debug(f"cache-config: {cache['config']}")
@@ -45,7 +46,7 @@ def autoexp(image_input,cache):
                 os.system(f"v4l2-ctl --device /dev/video{cache['config']['indice_camera']} --set-ctrl=exposure_absolute={cache['config']['exposure_absolute']}")
                 time.sleep(0.25)
                 cv2.putText(image_input, "calcolo autoespozione in corso", (5, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
-
+                cache['autoexp'] = True
 
     except Exception as e:
         logging.error(f"error: {e}")

@@ -99,7 +99,7 @@ def tre_lines(x: np.ndarray,
     return y
 
 # 4. Main fit routine
-def fit_lines(image_input,image_output,
+def fit_lines(image_input,image_output,cache,
               blur_ksize: int = 5,
               canny_lo: int = 40,
               canny_hi: int = 120,
@@ -116,19 +116,28 @@ def fit_lines(image_input,image_output,
     try:
         pts = extract_contour_points(edges)
         # split contour by vertical margins
-        x_min, x_max = np.min(pts[:,0]), np.max(pts[:,0])
-        margin_frac = 0.01  # 1% margin on each side
 
-
-
+        margin_frac = 0.05  # 1% margin on each side
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
         rightest_upper=pts[np.lexsort((pts[:, 0], pts[:, 1]))]
         y_h=leftset_upper[0][1]
         x_min=leftset_upper[0][0]
         x_max=rightest_upper[0][0]
         margin = (x_max - x_min) * margin_frac
-        left_bound = x_min + margin
-        right_bound = x_max - margin
+        try:
+            marginl=cache['margin_auto']
+        except:
+            marginl=0
+            cache['margin_auto']=0
+            cache['s_err']=np.Inf
+
+        if cache['autoexp']:
+            marginl=0
+            cache['margin_auto']=0
+            cache['s_err']=np.Inf
+
+        left_bound = x_min + marginl
+        right_bound = x_max - marginl
 
         mask = (pts[:,0] >= left_bound) & (pts[:,0] <= right_bound)
         pts_mask= pts[mask]
@@ -164,12 +173,15 @@ def fit_lines(image_input,image_output,
             ftol=ftol, xtol=xtol, maxfev=maxfev
         )
         X0, Y0, mo, mi= popt
+        s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
+        if (np.abs(s-cache['s_err'])/s>0.025)and((right_bound-left_bound)>(x_max-x_min)*0.75):
+            cache['margin_auto']=marginl+2
+            cache['s_err']=s
+        msg="old "+str(cache['s_err']*1.05)+" new "+str(s)+" margin "+str(marginl)
+        cv2.putText(image_output, msg, (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0,255,0), 1)
 
 
-        # draw fitted lines extended
         h, w = image_input.shape
-       # canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
-
         xs = np.array([0, X0,w])
         ys=two_lines(xs,X0,Y0,mo,mi)
         cv2.line(image_output, (int(round(xs[0])), int(round(ys[0]))), (int(round(xs[1])), int(round(ys[1]))), (0,255,0), 1)
