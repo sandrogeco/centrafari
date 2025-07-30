@@ -11,8 +11,13 @@ def preprocess(gray: np.ndarray,
                canny_hi: int = 120) -> np.ndarray:
     blur = cv2.GaussianBlur(gray, (blur_ksize, blur_ksize), 0)
     _, binary = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    binary[0:5,:]=0
+    binary[-5:, :] = 0
+    binary[:, 0:5] = 0
+    binary[:, -5:] = 0
     edges = cv2.Canny(binary, canny_lo, canny_hi, apertureSize=3)
-    return edges
+
+    return edges,binary
 
 # 2. Extract contour points
 def extract_contour_points(edges: np.ndarray) -> np.ndarray:
@@ -65,14 +70,13 @@ def fit_lines(image_input,image_output,
    # image_input = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 
-    edges = preprocess(image_input, blur_ksize, canny_lo, canny_hi)
+    edges,binary = preprocess(image_input, blur_ksize, canny_lo, canny_hi)
+    #image_output[edges>0]=(255,0,0)
     try:
         pts = extract_contour_points(edges)
         # split contour by vertical margins
         x_min, x_max = np.min(pts[:,0]), np.max(pts[:,0])
-        margin_frac = 0.1  # 10% margin on each side
-
-
+        margin_frac = 0.01  # 1% margin on each side
 
 
 
@@ -92,8 +96,8 @@ def fit_lines(image_input,image_output,
         bot_pts = pts_mask[pts_mask[:,1] >  y_h]
         # draw both pieces
        # canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
-        for x,y in top_pts.astype(int): cv2.circle(image_output,(x,y),1,(255,0,255),-1)
-        for x,y in bot_pts.astype(int): cv2.circle(image_output,(x,y),1,(0,255,0),-1)
+#        for x,y in top_pts.astype(int): cv2.circle(image_output,(x,y),1,(255,0,255),-1)
+#        for x,y in bot_pts.astype(int): cv2.circle(image_output,(x,y),1,(0,255,0),-1)
         if debug:
             cv2.imshow('Contour split', image_output)
             cv2.waitKey(0)
@@ -120,7 +124,8 @@ def fit_lines(image_input,image_output,
 
         # draw fitted lines extended
         h, w = image_input.shape
-        canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+       # canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+        [cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
         ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         if ctrs:
             largest = max(ctrs, key=cv2.contourArea)
