@@ -66,71 +66,83 @@ def fit_lines(image_input,image_output,
 
 
     edges = preprocess(image_input, blur_ksize, canny_lo, canny_hi)
-    pts = extract_contour_points(edges)
-    # split contour by vertical margins
-    x_min, x_max = np.min(pts[:,0]), np.max(pts[:,0])
-    margin_frac = 0.1  # 10% margin on each side
-    margin = (x_max - x_min) * margin_frac
-    left_bound = x_min + margin
-    right_bound = x_max - margin
-    # central segment between vertical cuts
-    mask_mid = (pts[:,0] >= left_bound) & (pts[:,0] <= right_bound)
-    pts_mid = pts[mask_mid]
-    pts_mid = pts_mid[np.lexsort((pts_mid[:, 1], pts_mid[:, 0]))] #founf leftest upper y
-    # split into top and bottom pieces by median y
-    y_med = pts_mid[0][1]
-    top_pts = pts_mid[pts_mid[:,1] <= y_med]
-    bot_pts = pts_mid[pts_mid[:,1] >  y_med]
-    # draw both pieces
-    canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
-    for x,y in top_pts.astype(int): cv2.circle(canvas,(x,y),1,(255,0,255),-1)
-    for x,y in bot_pts.astype(int): cv2.circle(canvas,(x,y),1,(0,255,0),-1)
-    if debug:
-        cv2.imshow('Contour split', canvas)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    # keep only top for fitting
-    pts = top_pts
-    x_data = pts[:, 0]
-    y_data = pts[:, 1]
+    try:
+        pts = extract_contour_points(edges)
+        # split contour by vertical margins
+        x_min, x_max = np.min(pts[:,0]), np.max(pts[:,0])
+        margin_frac = 0.1  # 10% margin on each side
 
 
-    p0 = [np.median(x_data), np.min(y_data), -0.1, -1.0]
-    # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
-    bounds = (
-        [np.min(x_data), 0.0,          -np.Inf,-np.Inf],
-        [np.max(x_data), np.max(y_data), 0,0]
-    )
 
-    popt, _ = curve_fit(
-        two_lines, x_data, y_data,
-        p0=p0, bounds=bounds,
-        ftol=ftol, xtol=xtol, maxfev=maxfev
-    )
-    X0, Y0, mo, mi = popt
 
-    # draw fitted lines extended
-    h, w = image_input.shape
-    canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
-    ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    if ctrs:
-        largest = max(ctrs, key=cv2.contourArea)
-        cv2.drawContours(canvas, [largest], -1, (0,0,255), 1)
-    xs = np.array([0, X0, w])
-    ys_o = Y0 + mo * (xs - X0)
-    ys_i = Y0 + mi * (xs - X0)
-    cv2.line(canvas, (0, int(round(ys_o[0]))), (int(round(X0)), int(round(Y0))), (0,255,255), 2)
-    cv2.line(canvas, (int(round(X0)), int(round(Y0))), (w, int(round(ys_i[2]))), (255,0,0), 2)
-    cv2.circle(canvas, (int(round(X0)), int(round(Y0))), 5, (0,255,0), -1)
 
-    if debug:
-        cv2.imshow('Fit two lines', canvas)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    image_output=canvas
-   # cv2.imwrite('fit_lines_result.png', canvas)
+        leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
+        rightest_upper=pts[np.lexsort((pts[:, 0], pts[:, 1]))]
+        y_h=leftset_upper[0][1]
+        x_min=leftset_upper[0][0]
+        x_max=rightest_upper[0][0]
+        margin = (x_max - x_min) * margin_frac
+        left_bound = x_min + margin
+        right_bound = x_max - margin
+
+        mask = (pts[:,0] >= left_bound) & (pts[:,0] <= right_bound)
+        pts_mask= pts[mask]
+
+        top_pts = pts_mask[pts_mask[:,1] <= y_h]
+        bot_pts = pts_mask[pts_mask[:,1] >  y_h]
+        # draw both pieces
+       # canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+        for x,y in top_pts.astype(int): cv2.circle(image_output,(x,y),1,(255,0,255),-1)
+        for x,y in bot_pts.astype(int): cv2.circle(image_output,(x,y),1,(0,255,0),-1)
+        if debug:
+            cv2.imshow('Contour split', image_output)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        # keep only top for fitting
+        pts = top_pts
+        x_data = pts[:, 0]
+        y_data = pts[:, 1]
+
+
+        p0 = [np.median(x_data), np.min(y_data), -0.1, -1.0]
+        # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
+        bounds = (
+            [np.min(x_data), 0.0,          -np.Inf,-np.Inf],
+            [np.max(x_data), np.max(y_data), 0,0]
+        )
+
+        popt, _ = curve_fit(
+            two_lines, x_data, y_data,
+            p0=p0, bounds=bounds,
+            ftol=ftol, xtol=xtol, maxfev=maxfev
+        )
+        X0, Y0, mo, mi = popt
+
+        # draw fitted lines extended
+        h, w = image_input.shape
+        canvas = cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
+        ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        if ctrs:
+            largest = max(ctrs, key=cv2.contourArea)
+            cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
+        xs = np.array([0, X0, w])
+        ys_o = Y0 + mo * (xs - X0)
+        ys_i = Y0 + mi * (xs - X0)
+        cv2.line(image_output, (0, int(round(ys_o[0]))), (int(round(X0)), int(round(Y0))), (0,255,255), 1)
+        cv2.line(image_output, (int(round(X0)), int(round(Y0))), (w, int(round(ys_i[2]))), (255,0,0), 1)
+        cv2.circle(image_output, (int(round(X0)), int(round(Y0))), 5, (0,255,0), -1)
+
+        if debug:
+            cv2.imshow('Fit two lines', image_output)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+       # image_output=canvas
+       # cv2.imwrite('fit_lines_result.png', canvas)
+    except:
+        X0=0
+        Y0=0
     return image_output,(X0,Y0)
-    print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
+    #print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
 
 if False:#__name__ == '__main__':
     import argparse
