@@ -36,7 +36,7 @@ def show_frame( cache, lmain):
     stato_comunicazione = cache['stato_comunicazione']
 
     image_input = preprocess(image_input, cache)
-    if cache['CAMERA']:
+    if (cache['CAMERA'])and(cache['AUTOEXP']):
         autoexp(image_input, cache)
     else:
         cache['autoexp']=False
@@ -148,6 +148,7 @@ if __name__ == "__main__":
         "DEBUG": config.get("DEBUG") or False,
         "CAMERA":config.get("CAMERA") or False,
         "COMM":config.get("COMM") or False,
+        "AUTOEXP": config.get("AUTOEXP") or False,
         "config": config,
         "stato_comunicazione": {},
         "queue": Queue(),

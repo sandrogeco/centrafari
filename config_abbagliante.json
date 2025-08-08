@@ -1,18 +1,18 @@
 {
-    "DEBUG":true,
+    "DEBUG": true,
     "CAMERA": true,
     "COMM": true,
-
+    "AUTOEXP":false,
     "width": 630,
     "height": 320,
-
     "window_shift_x": 278,
     "window_shift_y": 130,
-
-    "crop_center": [100, 100],
-    "crop_w": 300,
-    "crop_h": 100,
-
+    "crop_center": [
+        314,
+        195
+    ],
+    "crop_w": 390,
+    "crop_h": 198,
     "brightness": 0,
     "contrast": 100,
     "saturation": 0,
@@ -21,8 +21,7 @@
     "lux_sft_y": 0,
     "lux_w": 10,
     "lux_h": 10,
-
-    "cam_g":2.2e-1,
-    "cam_c":0,
+    "cam_g": 0.22,
+    "cam_c": 0,
     "port": 28500
 }

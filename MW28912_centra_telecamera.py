@@ -17,7 +17,7 @@ import logging
 import cv2
 
 from utils import uccidi_processo
-from camera import set_camera, apri_camera
+from camera import set_camera, apri_camera,autoexp
 
 
 def show_frame( cache, lmain):
@@ -25,6 +25,9 @@ def show_frame( cache, lmain):
     if image_input is None:
         lmain.after(10, lambda: show_frame(cache, lmain))
         return
+
+    autoexp(image_input, cache)
+    cache['autoexp']=False
 
     if cache["crop_center"]:
         cv2.circle(image_input, cache["crop_center"], 5, (255, 0, 0), 2)
@@ -142,7 +145,9 @@ if __name__ == "__main__":
         "crop_center": None,
         "crop_w": None,
         "crop_h": None,
-        "OK": False
+        "OK": False,
+        "config":{"exposure_absolute":10000,
+                  "indice_camera":0}
     }
 
     # Imposta la finestra

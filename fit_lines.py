@@ -10,11 +10,15 @@ def preprocess(gray: np.ndarray,
                canny_lo: int = 40,
                canny_hi: int = 120) -> np.ndarray:
     blur = cv2.GaussianBlur(gray, (blur_ksize, blur_ksize), 0)
-    _, binary = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+   # tr, binary = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, binary = cv2.threshold(blur, 25, 255, cv2.THRESH_BINARY)
+
     binary[0:5,:]=0
     binary[-5:, :] = 0
     binary[:, 0:5] = 0
     binary[:, -5:] = 0
+
     edges = cv2.Canny(binary, canny_lo, canny_hi, apertureSize=3)
 
     return edges,binary
@@ -116,14 +120,13 @@ def fit_lines(image_input,image_output,cache,
     try:
         pts = extract_contour_points(edges)
         # split contour by vertical margins
-
-        margin_frac = 0.05  # 1% margin on each side
+       # margin_frac = 0.05  # 1% margin on each side
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
         rightest_upper=pts[np.lexsort((pts[:, 0], pts[:, 1]))]
         y_h=leftset_upper[0][1]
         x_min=leftset_upper[0][0]
         x_max=rightest_upper[0][0]
-        margin = (x_max - x_min) * margin_frac
+      #  margin = (x_max - x_min) * margin_frac
         try:
             marginl=cache['margin_auto']
         except:
@@ -132,12 +135,12 @@ def fit_lines(image_input,image_output,cache,
             cache['s_err']=np.Inf
 
         if cache['autoexp']:
-            marginl=0
+            #marginl=0
             cache['margin_auto']=0
             cache['s_err']=np.Inf
 
         left_bound = x_min + marginl
-        right_bound = x_max - marginl
+        right_bound = x_max# - marginl
 
         mask = (pts[:,0] >= left_bound) & (pts[:,0] <= right_bound)
         pts_mask= pts[mask]
@@ -174,6 +177,7 @@ def fit_lines(image_input,image_output,cache,
         )
         X0, Y0, mo, mi= popt
         s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
+      #  image_output=10*(image_output//10)
         if (np.abs(s-cache['s_err'])/s>0.025)and((right_bound-left_bound)>(x_max-x_min)*0.75):
             cache['margin_auto']=marginl+2
             cache['s_err']=s
@@ -208,6 +212,7 @@ def fit_lines(image_input,image_output,cache,
     except:
         X0=0
         Y0=0
+    print(X0,' ',Y0)
     return image_output,(X0,Y0)
     #print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
 
