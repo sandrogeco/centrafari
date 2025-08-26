@@ -29,6 +29,7 @@ def set_camera(i, config):
 
 def autoexp(image_input,cache):
     cache['autoexp'] = False
+
     try:
         r=np.max(image_input)
       #  logging.debug(f"cache-config: {cache['config']}")
@@ -48,8 +49,10 @@ def autoexp(image_input,cache):
                 time.sleep(0.25)
 
                 cache['autoexp'] = True
-        cv2.putText(image_input, str(r)+" calcolo autoespozione in corso " + str(cache['config']['exposure_absolute']), (5, 80),
-                cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, get_colore('green'), 1)
+       # cv2.putText(image_input, str(r)+" calcolo autoespozione in corso " + str(cache['config']['exposure_absolute']), (5, 80),
+         #       cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, get_colore('green'), 1)
     except Exception as e:
         logging.error(f"error: {e}")
+
+
 

@@ -3,6 +3,7 @@ import sys
 import numpy as np
 from typing import Tuple
 from scipy.optimize import curve_fit
+import logging
 
 # 1. Preprocessing: blur + Otsu + Canny
 def preprocess(gray: np.ndarray,
@@ -131,17 +132,25 @@ def fit_lines(image_input,image_output,cache,
             marginl=cache['margin_auto']
         except:
             marginl=0
+            marginl1=0
             cache['margin_auto']=0
             cache['s_err']=np.Inf
+            cache['X0']=300
+            cache['Y0']=0
+            cache['r_bound']=x_max
 
         if cache['autoexp']:
             #marginl=0
             cache['margin_auto']=0
             cache['s_err']=np.Inf
+            cache['r_bound'] = x_max
 
         left_bound = x_min + marginl
-        right_bound = x_max# - marginl
-
+        right_bound =np.minimum(x_max,cache['r_bound'])#x_max -marginl#cache['X0']+(cache['X0']-left_bound)
+        logging.debug(f"cachex0:{cache['X0']}")
+        logging.debug(f"left_bound:{left_bound}")
+        logging.debug(f"right_bound:{right_bound}")
+        logging.debug(f"x_max:{x_max}")
         mask = (pts[:,0] >= left_bound) & (pts[:,0] <= right_bound)
         pts_mask= pts[mask]
 
@@ -166,7 +175,7 @@ def fit_lines(image_input,image_output,cache,
         p0 = [np.mean(x_data), np.max(y_data)-1, -0.01, -1.0]
         # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
         bounds = (
-            [np.min(x_data), 0.0,-0.05,-np.Inf],
+            [np.min(x_data), 0.0,-0.5,-np.Inf],
             [np.max(x_data), np.max(y_data), 0,0]
         )
 
@@ -178,8 +187,10 @@ def fit_lines(image_input,image_output,cache,
         X0, Y0, mo, mi= popt
         s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
       #  image_output=10*(image_output//10)
-        if (np.abs(s-cache['s_err'])/s>0.025)and((right_bound-left_bound)>(x_max-x_min)*0.75):
+        if (np.abs(s-cache['s_err'])/s>0.025)and((left_bound-x_min)<(x_max-x_min)*0.25):
             cache['margin_auto']=marginl+2
+            cache['r_bound']=2*X0+left_bound
+
             cache['s_err']=s
         msg="old "+str(cache['s_err']*1.05)+" new "+str(s)+" margin "+str(marginl)
         cv2.putText(image_output, msg, (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0,255,0), 1)
@@ -209,10 +220,13 @@ def fit_lines(image_input,image_output,cache,
             cv2.destroyAllWindows()
        # image_output=canvas
        # cv2.imwrite('fit_lines_result.png', canvas)
-    except:
+    except Exception as e:
         X0=0
         Y0=0
+        logging.error(e)
     print(X0,' ',Y0)
+    cache['X0']=X0
+    cache['Y0']=Y0
     return image_output,(X0,Y0)
     #print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
 
