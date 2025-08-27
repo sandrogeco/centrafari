@@ -41,6 +41,8 @@ def show_frame( cache, lmain):
     else:
         cache['autoexp']=False
 
+    if cache['pos']=='dx':
+        image_input=cv2.flip(image_input,1)
     #image_output= cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
 #    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==0:
@@ -69,7 +71,8 @@ def show_frame( cache, lmain):
         else calcola_lux(image_input, image_output, (cache['config']['width']/2,cache['config']['height']/2), (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
                 (cache['config']['lux_w'], cache['config']['lux_h']), cache)
 
-
+    if cache['pos']=='dx':
+        point=(cache['config']['width']-point[0],point[1])
 
     if stato_comunicazione.get('croce', 0) == 1:
         visualizza_croce_riferimento(
@@ -133,14 +136,13 @@ if __name__ == "__main__":
    # uccidi_processo("usb_video_capture_cm4")
 
     tipo_faro = sys.argv[1].lower()
+    dxsx=sys.argv[2].lower()
 
     # Carica la configurazione
     percorso_script = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(percorso_script, f"config_{tipo_faro}.json"), "r") as f:
         config = json.load(f)
 
-    if len(sys.argv) > 2:
-        config['port'] = int(sys.argv[2])
 
     logging.getLogger().setLevel(logging.DEBUG if config.get("DEBUG", False) else logging.INFO)
 
@@ -153,6 +155,7 @@ if __name__ == "__main__":
         "stato_comunicazione": {},
         "queue": Queue(),
         "tipo_faro": tipo_faro,
+        "pos":dxsx
     }
     cache['config']['exposure_absolute']=10000
 
