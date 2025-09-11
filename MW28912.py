@@ -35,44 +35,50 @@ def show_frame( cache, lmain):
         return
     stato_comunicazione = cache['stato_comunicazione']
 
-    image_input = preprocess(image_input, cache)
+    image_input,image_view = preprocess(image_input, cache)
     if (cache['CAMERA'])and(cache['AUTOEXP']):
         autoexp(image_input, cache)
     else:
         cache['autoexp']=False
 
-    if cache['pos']=='dx':
+    if cache['pos']=='sx':
         image_input=cv2.flip(image_input,1)
+        image_view = cv2.flip(image_view, 1)
     #image_output= cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
 #    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==0:
         #image_output = cv2.applyColorMap(image_input.copy(), cv2.COLOR_BGR2GRAY)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
-        image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
+        image_view = cv2.cvtColor(image_view, cv2.COLOR_BGR2GRAY)
+        image_output = cv2.cvtColor(image_view.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==1:
-        image_output = cv2.applyColorMap(image_input.copy(), cv2.COLOR_BGR2GRAY)
+        image_output = cv2.applyColorMap(image_view.copy(), cv2.COLOR_BGR2GRAY)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
     if stato_comunicazione.get('pattern',0)==2:
-        image_output = cv2.applyColorMap(255-image_input.copy(), cv2.COLORMAP_JET)
+        image_output = cv2.applyColorMap(255-image_view.copy(), cv2.COLORMAP_JET)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
+
+
 
 
     logging.debug(f"[PT] {stato_comunicazione.get('pattern',0)}")
 
     if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
        # image_output, point, _ = rileva_punto_angoloso1(image_input, image_output, cache)
-        image_output, point =fit_lines.fit_lines(image_input,image_output,cache, 5, 40, 120, 1e-8, 1e-8, 1000)
+        image_output, point =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000)
     #    lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
-
-    lux = calcola_lux(image_input, image_output, point, (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
+    sft_x=cache['config']['lux_sft_x']*cache['config']['crop_w']/160
+    sft_y = cache['config']['lux_sft_y'] * cache['config']['crop_h'] / 160
+    lux = calcola_lux(image_input, image_output, point, (sft_x,sft_y),
                       (cache['config']['lux_w'], cache['config']['lux_h']), cache) if point \
-        else calcola_lux(image_input, image_output, (cache['config']['width']/2,cache['config']['height']/2), (cache['config']['lux_sft_x'], cache['config']['lux_sft_y']),
+        else calcola_lux(image_input, image_output, (cache['config']['width']/2,cache['config']['height']/2), (sft_x, sft_y),
                 (cache['config']['lux_w'], cache['config']['lux_h']), cache)
 
-    if cache['pos']=='dx':
+    if cache['pos']=='sx':
         point=(cache['config']['width']-point[0],point[1])
+    logging.debug("pos "+cache['pos'])
 
     if stato_comunicazione.get('croce', 0) == 1:
         visualizza_croce_riferimento(
@@ -136,8 +142,12 @@ if __name__ == "__main__":
    # uccidi_processo("usb_video_capture_cm4")
 
     tipo_faro = sys.argv[1].lower()
-    dxsx=sys.argv[2].lower()
+    try:
+        dxsx=sys.argv[2].lower()
+    except:
+        dxsx='dx'
 
+    #logging.debug('iPos'+sys.argv[2].lower())
     # Carica la configurazione
     percorso_script = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(percorso_script, f"config_{tipo_faro}.json"), "r") as f:
@@ -157,7 +167,7 @@ if __name__ == "__main__":
         "tipo_faro": tipo_faro,
         "pos":dxsx
     }
-    cache['config']['exposure_absolute']=10000
+    #cache['config']['exposure_absolute']=10000
 
     if cache['COMM']:
         threading.Thread(target=partial(thread_comunicazione, config['port'], cache), daemon=True, name="com_in").start()
@@ -203,3 +213,13 @@ if __name__ == "__main__":
 
     show_frame(cache, lmain)
     root.mainloop()
+
+
+
+#630 pixel --->20cm in larghezza
+#320 pixel -->16cm
+
+#a 25m 1cm sullo schermo è 50cm
+#quindi sulla x 630:200=x:3970/50
+#quindi   "crop_w": 249,
+#         "crop_h": 130,

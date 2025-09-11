@@ -144,7 +144,7 @@ def fit_lines(image_input,image_output,cache,
             cache['margin_auto']=0
             cache['s_err']=np.Inf
             cache['r_bound'] = x_max
-
+        marginl=20
         left_bound = x_min + marginl
         right_bound =np.minimum(x_max,cache['r_bound'])#x_max -marginl#cache['X0']+(cache['X0']-left_bound)
         logging.debug(f"cachex0:{cache['X0']}")
@@ -187,11 +187,14 @@ def fit_lines(image_input,image_output,cache,
         X0, Y0, mo, mi= popt
         s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
       #  image_output=10*(image_output//10)
-        if (np.abs(s-cache['s_err'])/s>0.025)and((left_bound-x_min)<(x_max-x_min)*0.25):
-            cache['margin_auto']=marginl+2
-            cache['r_bound']=2*X0+left_bound
 
-            cache['s_err']=s
+        #centratura aut
+      #   if (np.abs(s-cache['s_err'])/s>0.025)and((left_bound-x_min)<(x_max-x_min)*0.25):
+      #       cache['margin_auto']=marginl+2
+      #       cache['r_bound']=2*X0+left_bound
+      #
+      #       cache['s_err']=s
+
         msg="old "+str(cache['s_err']*1.05)+" new "+str(s)+" margin "+str(marginl)
         cv2.putText(image_output, msg, (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0,255,0), 1)
 

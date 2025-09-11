@@ -14,7 +14,8 @@ def trova_contorni_abbagliante(image_input, image_output, cache):
 
     cv2.normalize(image_input, image_tmp, 0, 255, cv2.NORM_MINMAX)
     c = np.cumsum(np.histogram(image_tmp.reshape(AREA), bins=255)[0]) / AREA
-    l = np.where(c > LEVEL)[0][0]
+    #l = np.where(c > LEVEL)[0][0]
+    l=210
     image_tmp[image_tmp < l] = 0
 
     if cache["DEBUG"]:
