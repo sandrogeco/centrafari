@@ -146,7 +146,7 @@ if __name__ == "__main__":
         dxsx=sys.argv[2].lower()
     except:
         dxsx='dx'
-
+    dxsx='dx'
     #logging.debug('iPos'+sys.argv[2].lower())
     # Carica la configurazione
     percorso_script = os.path.dirname(os.path.abspath(__file__))
@@ -223,3 +223,8 @@ if __name__ == "__main__":
 #quindi sulla x 630:200=x:3970/50
 #quindi   "crop_w": 249,
 #         "crop_h": 130,
+
+#zona75R
+#500mma 25m  da pt
+# 630:200=x:500/50
+#dx75R 31.5

@@ -31,7 +31,7 @@ def extract_contour_points(edges: np.ndarray) -> np.ndarray:
         raise ValueError("No contours found")
     largest = max(contours, key=cv2.contourArea)
     pts = np.squeeze(largest)
-    return pts.astype(float)
+    return pts.astype(float),contours
 
 # 3. Two-line model for curve_fit
 def two_lines(x: np.ndarray,
@@ -115,11 +115,16 @@ def fit_lines(image_input,image_output,cache,
     global gray, x_data, y_data
    # image_input = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-
+    a=0
     edges,binary = preprocess(image_input, blur_ksize, canny_lo, canny_hi)
     #image_output[edges>0]=(255,0,0)
     try:
-        pts = extract_contour_points(edges)
+        pts,ctrs = extract_contour_points(edges)
+        if ctrs:
+            largest = max(ctrs, key=cv2.contourArea)
+            cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
+        a+=1
+        logging.debug(str(a))
         # split contour by vertical margins
        # margin_frac = 0.05  # 1% margin on each side
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
@@ -169,8 +174,8 @@ def fit_lines(image_input,image_output,cache,
         x_data = pts[:, 0]
         y_data = pts[:, 1]
 
-
-
+        a+=1
+        logging.debug(str(a))
 
         p0 = [np.mean(x_data), np.max(y_data)-1, -0.01, -1.0]
         # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
@@ -178,14 +183,17 @@ def fit_lines(image_input,image_output,cache,
             [np.min(x_data), 0.0,-0.5,-np.Inf],
             [np.max(x_data), np.max(y_data), 0,0]
         )
+        try:
+            popt, _ = curve_fit(
+                two_lines, x_data, y_data,
+                p0=p0, bounds=bounds,
+                ftol=ftol, xtol=xtol, maxfev=maxfev
+            )
+            X0, Y0, mo, mi= popt
+        except Exception as e:
+            cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
 
-        popt, _ = curve_fit(
-            two_lines, x_data, y_data,
-            p0=p0, bounds=bounds,
-            ftol=ftol, xtol=xtol, maxfev=maxfev
-        )
-        X0, Y0, mo, mi= popt
-        s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
+        #  s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
       #  image_output=10*(image_output//10)
 
         #centratura aut
@@ -194,9 +202,8 @@ def fit_lines(image_input,image_output,cache,
       #       cache['r_bound']=2*X0+left_bound
       #
       #       cache['s_err']=s
-
-        msg="old "+str(cache['s_err']*1.05)+" new "+str(s)+" margin "+str(marginl)
-        cv2.putText(image_output, msg, (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0,255,0), 1)
+       # msg="old "+str(cache['s_err']*1.05)+" new "+str(s)+" margin "+str(marginl)
+       # cv2.putText(image_output, msg, (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0,255,0), 1)
 
 
         h, w = image_input.shape
@@ -213,16 +220,9 @@ def fit_lines(image_input,image_output,cache,
 
 
         [cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
-        ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        if ctrs:
-            largest = max(ctrs, key=cv2.contourArea)
-            cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
-        if debug:
-            cv2.imshow('Fit two lines', image_output)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-       # image_output=canvas
-       # cv2.imwrite('fit_lines_result.png', canvas)
+#        ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+
     except Exception as e:
         X0=0
         Y0=0

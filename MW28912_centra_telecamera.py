@@ -17,7 +17,7 @@ import logging
 import cv2
 
 from utils import uccidi_processo
-from camera import set_camera, apri_camera,autoexp
+from camera import set_camera, apri_camera,autoexp,fixexp
 
 
 def show_frame( cache, lmain):
@@ -25,22 +25,22 @@ def show_frame( cache, lmain):
     if image_input is None:
         lmain.after(10, lambda: show_frame(cache, lmain))
         return
-
-    autoexp(image_input, cache)
-    cache['autoexp']=False
+   # image_input = image_input[-cache['config']['height']:, :]
+    fixexp(cache,5000)
+    #cache['autoexp']=False
 
     if cache["crop_center"]:
         cv2.circle(image_input, cache["crop_center"], 5, (255, 0, 0), 2)
-    if cache["crop_w"] and cache["crop_h"]:
-        crop_center = cache["crop_center"]
-        crop_w = cache['crop_w']
-        crop_h = cache['crop_h']
-        start_y = max(int(crop_center[1] - crop_h / 2), 0)
-        end_y = int(start_y + crop_h)
-        start_x = max(int(crop_center[0] - crop_w / 2), 0)
-        end_x = int(start_x + crop_w)
-
-        cv2.rectangle(image_input, (start_x, start_y), (end_x, end_y), (255, 0, 0), 2)
+    # if cache["crop_w"] and cache["crop_h"]:
+    #     crop_center = cache["crop_center"]
+    #     crop_w = cache['crop_w']
+    #     crop_h = cache['crop_h']
+    #     start_y = max(int(crop_center[1] - crop_h / 2), 0)
+    #     end_y = int(start_y + crop_h)
+    #     start_x = max(int(crop_center[0] - crop_w / 2), 0)
+    #     end_x = int(start_x + crop_w)
+    #
+    #     cv2.rectangle(image_input, (start_x, start_y), (end_x, end_y), (255, 0, 0), 2)
 
         # Segnala che la procedura e' terminata
         cache["OK"] = True
@@ -48,12 +48,12 @@ def show_frame( cache, lmain):
     if not cache["crop_center"]:
         cv2.putText(image_input, "Clicca sul punto che dovra' essere", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
         cv2.putText(image_input, "al centro del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-    elif not cache["crop_w"] or not cache["crop_h"]:
-        cv2.putText(image_input, "Clicca sul punto che definisce il", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-        cv2.putText(image_input, "margine inferiore sx del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-    elif cache["OK"]:
-        cv2.putText(image_input, "Clicca di nuovo per terminare", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-        cv2.putText(image_input, "la procedura", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+    # elif not cache["crop_w"] or not cache["crop_h"]:
+    #     cv2.putText(image_input, "Clicca sul punto che definisce il", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+    #     cv2.putText(image_input, "margine inferiore sx del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+    # elif cache["OK"]:
+    #     cv2.putText(image_input, "Clicca di nuovo per terminare", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+    #     cv2.putText(image_input, "la procedura", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
 
     img = PIL.Image.fromarray(image_input)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -104,14 +104,14 @@ if __name__ == "__main__":
         del config["crop_center"]
     except:
         pass
-    try:
-        del config["crop_w"]
-    except:
-        pass
-    try:
-        del config["crop_h"]
-    except:
-        pass
+    # try:
+    #     del config["crop_w"]
+    # except:
+    #     pass
+    # try:
+    #     del config["crop_h"]
+    # except:
+    #     pass
 
     # indice_camera, video = apri_camera()
     # if video is None:
@@ -146,10 +146,9 @@ if __name__ == "__main__":
         "crop_w": None,
         "crop_h": None,
         "OK": False,
-        "config":{"exposure_absolute":10000,
-                  "indice_camera":0}
+        "config":config
     }
-
+    cache['config']['indice_camera'] = 0
     # Imposta la finestra
     def callback_click(event):
         logging.info(f"callback_click {event.x}, {event.y}")
@@ -160,13 +159,13 @@ if __name__ == "__main__":
         if not cache["crop_center"]:
             config["crop_center"] = (event.x, event.y)
             cache["crop_center"] = config["crop_center"]
-        elif not cache["crop_w"] or not cache["crop_h"]:
-            config["crop_w"] = 2 * abs(event.x - cache["crop_center"][0])
-            config["crop_h"] = 2 * abs(event.y - cache["crop_center"][1])
-            cache["crop_w"] = config["crop_w"]
-            cache["crop_h"] = config["crop_h"]
+        # elif not cache["crop_w"] or not cache["crop_h"]:
+        #     config["crop_w"] = 2 * abs(event.x - cache["crop_center"][0])
+        #     config["crop_h"] = 2 * abs(event.y - cache["crop_center"][1])
+        #     cache["crop_w"] = config["crop_w"]
+        #     cache["crop_h"] = config["crop_h"]
 
-        if cache["OK"]:
+        #if cache["OK"]:
             sys.exit(0)
 
         with open(os.path.join(percorso_script, f"config_{tipo_faro}.json"), "w") as f:

@@ -57,4 +57,11 @@ def autoexp(image_input,cache):
         logging.error(f"error: {e}")
 
 
+def fixexp(cache,ctr):
+    os.system(f"v4l2-ctl --device /dev/video{cache['config']['indice_camera']} --set-ctrl=exposure_absolute={ctr}")
+    time.sleep(0.25)
+
+
+
+
 
