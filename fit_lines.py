@@ -108,8 +108,8 @@ def fit_lines(image_input,image_output,cache,
               blur_ksize: int = 5,
               canny_lo: int = 40,
               canny_hi: int = 120,
-              ftol: float = 1e-8,
-              xtol: float = 1e-8,
+              ftol: float = 1e-7,
+              xtol: float = 1e-7,
               maxfev: int = 1000,
               debug: bool = False) -> None:
     global gray, x_data, y_data
@@ -123,8 +123,7 @@ def fit_lines(image_input,image_output,cache,
         if ctrs:
             largest = max(ctrs, key=cv2.contourArea)
             cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
-        a+=1
-        logging.debug(str(a))
+
         # split contour by vertical margins
        # margin_frac = 0.05  # 1% margin on each side
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
@@ -174,8 +173,6 @@ def fit_lines(image_input,image_output,cache,
         x_data = pts[:, 0]
         y_data = pts[:, 1]
 
-        a+=1
-        logging.debug(str(a))
 
         p0 = [np.mean(x_data), np.max(y_data)-1, -0.01, -1.0]
         # Ensure X0 within data range; Y0 must be above contour (<= min y_data)

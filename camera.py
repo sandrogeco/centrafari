@@ -27,8 +27,8 @@ def set_camera(i, config):
     except Exception as e:
         logging.error(f"error: {e}")
 
-def autoexp(image_input,cache):
-    cache['autoexp'] = False
+def autoexp(image_input,image_view,cache):
+    cache['autoexp'] = True
 
     try:
         r=np.max(image_input)
@@ -37,9 +37,16 @@ def autoexp(image_input,cache):
 
         exp_old=cache['config']['exposure_absolute']
         if (r>240):
-            cache['config']['exposure_absolute']=cache['config']['exposure_absolute']*0.95
+            cache['config']['exposure_absolute']=cache['config']['exposure_absolute']*0.9
+            cache['autoexp'] = False
         if r <235:
-            cache['config']['exposure_absolute'] = cache['config']['exposure_absolute'] * 1.05
+            cache['config']['exposure_absolute'] = cache['config']['exposure_absolute'] * 1.1
+            cache['autoexp'] = False
+        if (r>=235)and(r<=240):
+            if (r>237):
+                 cache['config']['exposure_absolute']=cache['config']['exposure_absolute']*0.998
+            if (r<=237):
+                cache['config']['exposure_absolute'] = cache['config']['exposure_absolute'] * 1.002
         logging.debug(f"exp: {cache['config']['exposure_absolute']}")
         if cache['config']['exposure_absolute']<50:
             cache['config']['exposure_absolute']=50
@@ -48,13 +55,14 @@ def autoexp(image_input,cache):
 
         if exp_old!=cache['config']['exposure_absolute']:
                 os.system(f"v4l2-ctl --device /dev/video{cache['config']['indice_camera']} --set-ctrl=exposure_absolute={cache['config']['exposure_absolute']}")
-                time.sleep(0.25)
-                cache['autoexp'] = True
-        if cache["DEBUG"]:
-            cv2.putText(image_input, str(r)+" calcolo autoe in corso " + str(cache['config']['exposure_absolute'])+ " 235s:"+str(s235), (5, 80),
+                time.sleep(0.1)
+
+        if (cache['autoexp'] ==False):
+            cv2.putText(image_view, str(r)+" calcolo autoe in corso " + str(cache['config']['exposure_absolute'])+ " 235s:"+str(s235), (5, 80),
                     cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, get_colore('green'), 1)
     except Exception as e:
         logging.error(f"error: {e}")
+    return image_view
 
 
 def fixexp(cache,ctr):

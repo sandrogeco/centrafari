@@ -22,6 +22,7 @@ def preprocess(image, cache):
     image = image[start_y: end_y, :]
     image_o=image.copy()*0
     image_o[start_y : end_y, start_x : end_x] = image[start_y : end_y, start_x : end_x]
+    image=cv2.convertScaleAbs(image, alpha=1.0, beta=20)
 
 
     # Stira immagine

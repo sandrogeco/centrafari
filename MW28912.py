@@ -37,7 +37,7 @@ def show_frame( cache, lmain):
 
     image_input,image_view = preprocess(image_input, cache)
     if (cache['CAMERA'])and(cache['AUTOEXP']):
-        autoexp(image_input, cache)
+        image_view=autoexp(image_input, image_view,cache)
     else:
         cache['autoexp']=False
 
