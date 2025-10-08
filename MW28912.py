@@ -63,10 +63,10 @@ def show_frame( cache, lmain):
 
     logging.debug(f"[PT] {stato_comunicazione.get('pattern',0)}")
 
-    if cache['tipo_faro'] == 'anabbagliante' or cache['tipo_faro'] == 'fendinebbia':
-       # image_output, point, _ = rileva_punto_angoloso1(image_input, image_output, cache)
+    if cache['tipo_faro'] == 'anabbagliante':
         image_output, point =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000)
-    #    lux = calcola_lux(image_input, image_output, point, (20, 20), (30, 30), cache) if point else 0
+    if cache['tipo_faro'] == 'fendinebbia':
+        image_output, point =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000,False,True)
     elif cache['tipo_faro'] == 'abbagliante':
         image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
     sft_x=cache['config']['lux_sft_x']*cache['config']['crop_w']/160
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         dxsx=sys.argv[2].lower()
     except:
         dxsx='dx'
-    dxsx='dx'
+   # dxsx='dx'
     #logging.debug('iPos'+sys.argv[2].lower())
     # Carica la configurazione
     percorso_script = os.path.dirname(os.path.abspath(__file__))

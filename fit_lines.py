@@ -111,21 +111,18 @@ def fit_lines(image_input,image_output,cache,
               ftol: float = 1e-7,
               xtol: float = 1e-7,
               maxfev: int = 1000,
-              debug: bool = False) -> None:
+              debug: bool = False,
+              flat:bool=False) -> None:
     global gray, x_data, y_data
-   # image_input = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-    a=0
     edges,binary = preprocess(image_input, blur_ksize, canny_lo, canny_hi)
-    #image_output[edges>0]=(255,0,0)
+
     try:
         pts,ctrs = extract_contour_points(edges)
         if ctrs:
             largest = max(ctrs, key=cv2.contourArea)
             cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
 
-        # split contour by vertical margins
-       # margin_frac = 0.05  # 1% margin on each side
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
         rightest_upper=pts[np.lexsort((pts[:, 0], pts[:, 1]))]
         y_h=leftset_upper[0][1]
@@ -180,6 +177,12 @@ def fit_lines(image_input,image_output,cache,
             [np.min(x_data), 0.0,-0.5,-np.Inf],
             [np.max(x_data), np.max(y_data), 0,0]
         )
+        if flat:
+            xm=(np.max(x_data)+np.min(x_data))/2
+            bounds = (
+                [xm*0.95, 0.0, -0.5, -np.Inf],
+                [xm*1.15, np.max(y_data), 0, 0]
+            )
         try:
             popt, _ = curve_fit(
                 two_lines, x_data, y_data,
@@ -187,6 +190,7 @@ def fit_lines(image_input,image_output,cache,
                 ftol=ftol, xtol=xtol, maxfev=maxfev
             )
             X0, Y0, mo, mi= popt
+
         except Exception as e:
             cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
 
