@@ -21,7 +21,7 @@ from camera import set_camera, apri_camera,autoexp,fixexp
 
 
 def show_frame( cache, lmain):
-    image_input = cv2.imread("/tmp/frame.jpg")
+    image_input = cv2.imread("/mnt/temp/frame.jpg")
     if image_input is None:
         lmain.after(10, lambda: show_frame(cache, lmain))
         return
@@ -51,9 +51,9 @@ def show_frame( cache, lmain):
     # elif not cache["crop_w"] or not cache["crop_h"]:
     #     cv2.putText(image_input, "Clicca sul punto che definisce il", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
     #     cv2.putText(image_input, "margine inferiore sx del frame", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-    # elif cache["OK"]:
-    #     cv2.putText(image_input, "Clicca di nuovo per terminare", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
-    #     cv2.putText(image_input, "la procedura", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+    if cache["OK"]:
+         cv2.putText(image_input, "Clicca di nuovo per terminare", (5, 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
+         cv2.putText(image_input, "la procedura", (5, 60), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1)
 
     img = PIL.Image.fromarray(image_input)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         #     cache["crop_w"] = config["crop_w"]
         #     cache["crop_h"] = config["crop_h"]
 
-        #if cache["OK"]:
+        if cache["OK"]:
             sys.exit(0)
 
         with open(os.path.join(percorso_script, f"config_{tipo_faro}.json"), "w") as f:

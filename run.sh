@@ -133,7 +133,7 @@ view_remote_log() {
     echo "*** view_remote_log"
     ssh -p "$TARGET_SSH_PORT" "pi@$TARGET_IP" <<'EOF'
         echo -e "\n\n\n\n"
-        last_log=$(find /tmp/ -type f -name 'MW28912py_log_*.log' 2>/dev/null | sort -r | head -1)
+        last_log=$(find /mnt/temp/ -type f -name 'MW28912py_log_*.log' 2>/dev/null | sort -r | head -1)
 
         echo -e "Visualizzazione log: $last_log\n\n"
         tail -f "$last_log"

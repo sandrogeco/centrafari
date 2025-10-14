@@ -51,7 +51,7 @@ def thread_comunicazione(port, cache):
         else:
             try:
                 p = cache['queue'].get(timeout=0.3)
-                msg = f"XYL {p['posiz_pattern_x']} {p['posiz_pattern_y']} {p['lux']:.2f} "
+                msg = f"XYL {p['posiz_pattern_x']} {p['posiz_pattern_y']} {p['lux']:.2f} {p['roll']:.2f} {p['yaw']:.2f} {p['pitch']:.2f} "
             except:
                 msg = "idle "
         try:
