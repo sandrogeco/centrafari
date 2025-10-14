@@ -80,6 +80,7 @@ def show_frame( cache, lmain):
         point=(cache['config']['width']-point[0],point[1])
     logging.debug("pos "+cache['pos'])
 
+
     if stato_comunicazione.get('croce', 0) == 1:
         visualizza_croce_riferimento(
             image_output,

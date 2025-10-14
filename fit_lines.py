@@ -192,8 +192,8 @@ def fit_lines(image_input,image_output,cache,
 
     cache['X0']=X0
     cache['Y0']=Y0
-    dx=(X0-cache['config']['width']/2)*cache['x_coeff_pixel_m']
-    dy = (Y0 - cache['config']['heigth'] / 2)**cache['y_coeff_pixel_m']
+    dx=(X0-cache['config']['width']/2)*cache['config']['x_coeff_pixel_m']
+    dy = (Y0 - cache['config']['heigth'] / 2)**cache['config']['y_coeff_pixel_m']
     yaw_deg = np.degrees(np.arctan2(dx, 25))  # rotazione orizzontale (destra/sinistra)
     pitch_deg = np.degrees(np.arctan2(dy, 25))
     roll_deg = np.degrees(np.arctan(mo))
