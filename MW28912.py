@@ -28,7 +28,7 @@ def show_frame( cache, lmain):
     if cache['DEBUG']:
         t0 = time.monotonic()
 
-    image_input = cv2.imread("/tmp/frame.jpg")
+    image_input = cv2.imread("/mnt/temp/frame.jpg")
 
     if image_input is None:
         lmain.after(10, lambda: show_frame( cache, lmain))
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         format='%(asctime)s %(levelname)s %(message)s',
         handlers=[
-            logging.FileHandler(f"/tmp/MW28912py_log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"),
+            logging.FileHandler(f"/mnt/temp/MW28912py_log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"),
             logging.StreamHandler()
         ]
     )
