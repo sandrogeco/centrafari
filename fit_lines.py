@@ -64,45 +64,6 @@ def two_lines(x: np.ndarray,
         pass
     return y
 
-def tre_lines(x: np.ndarray,
-              X0: float, Y0: float,X1:float,Y1:float,
-              m0: float, m1: float,m2:float) -> np.ndarray:
-    if (X1<X0)or(m1>m0):
-        return np.full_like(x,1e6)
-
-    print(X0, ' ', Y0, ' ', X1, ' ', Y1, ' ', m0, ' ', m1, ' ', m2)
-    y = np.where(
-        x <= X0,
-        Y0 + m0 * (x - X0),  # tratto 1
-        np.where(
-            x <= X1,
-            (Y0 + m0 * (X1 - X0)) + m1 * (x - X1),  # tratto 2
-            # tratto 3: continua da Y a X1
-            (Y0 + m0 * (X1 - X0)) + m1 * (X1 - X1) + m2 * (x - X1)
-        )
-    )
-    # Dynamic visualization of current fit line
-
-    try:
-        pippo
-        global gray, x_data, y_data
-        canvas = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        h, w = gray.shape
-        print('x:',X0,' y:',Y0,' mo:',mo,' mi:',mi)
-        # endpoints
-        y_left = int(round(Y0 + mo * (0 - X0)))
-        y_right = int(round(Y0 + mi * (w - X0)))
-        y_o=Y0+mo*(-X0)
-        y_i=Y0+mi*(w-X0)
-        #cv2.line(canvas, (0, y_left), (w, y_right), (0, 255, 0), 1)
-        cv2.line(canvas, (0, int(round(y_o))), (int(round(X0)), int(round(Y0))), (0, 255, 255), 1)
-        cv2.line(canvas, (int(round(X0)), int(round(Y0))), (w, int(round(y_i))), (255, 0, 0), 1)
-        cv2.imshow('Fitting...', canvas)
-        cv2.waitKey(0)
-    except Exception:
-        pass
-    return y
-
 # 4. Main fit routine
 def fit_lines(image_input,image_output,cache,
               blur_ksize: int = 5,
@@ -228,10 +189,16 @@ def fit_lines(image_input,image_output,cache,
         X0=0
         Y0=0
         logging.error(e)
-    print(X0,' ',Y0)
+
     cache['X0']=X0
     cache['Y0']=Y0
-    return image_output,(X0,Y0)
+    dx=(X0-cache['config']['width']/2)*cache['x_coeff_pixel_m']
+    dy = (Y0 - cache['config']['heigth'] / 2)**cache['y_coeff_pixel_m']
+    yaw_deg = np.degrees(np.arctan2(dx, 25))  # rotazione orizzontale (destra/sinistra)
+    pitch_deg = np.degrees(np.arctan2(dy, 25))
+    roll_deg = np.degrees(np.arctan(mo))
+
+    return image_output,(X0,Y0),(yaw_deg,pitch_deg,roll_deg)
     #print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
 
 if False:#__name__ == '__main__':

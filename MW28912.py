@@ -64,11 +64,11 @@ def show_frame( cache, lmain):
     logging.debug(f"[PT] {stato_comunicazione.get('pattern',0)}")
 
     if cache['tipo_faro'] == 'anabbagliante':
-        image_output, point =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000)
+        image_output, point,angles =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000)
     if cache['tipo_faro'] == 'fendinebbia':
-        image_output, point =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000,False,True)
+        image_output, point,angles =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000,False,True)
     elif cache['tipo_faro'] == 'abbagliante':
-        image_output, point, _ = trova_contorni_abbagliante(image_input, image_output, cache)
+        image_output, point,angles = trova_contorni_abbagliante(image_input, image_output, cache)
     sft_x=cache['config']['lux_sft_x']*cache['config']['crop_w']/160
     sft_y = cache['config']['lux_sft_y'] * cache['config']['crop_h'] / 160
     lux = calcola_lux(image_input, image_output, point, (sft_x,sft_y),
@@ -91,9 +91,9 @@ def show_frame( cache, lmain):
 
     if point:
         disegna_punto(image_output, point, cache)
-        cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux })
+        cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux ,'yaw':angles[0],'pitch':angles[1],'roll':angles[2]})
     else:
-        cache['queue'].put({'posiz_pattern_x': 0, 'posiz_pattern_y': 0, 'lux': lux})
+        cache['queue'].put({'posiz_pattern_x': 0, 'posiz_pattern_y': 0, 'lux': lux,'yaw':0,'pitch':0,'roll':0})
 
     if cache['DEBUG']:
         msg = f"Durata elaborazione: {int(1000 * (time.monotonic() - t0))} ms, fps = {int(1 / (t0 - cache.get('t0', 0)))}"

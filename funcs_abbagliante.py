@@ -51,4 +51,4 @@ def trova_contorni_abbagliante(image_input, image_output, cache):
 
     disegna_pallino(image_output, (x_cms, y_cms), 6, 'green', -1)
 
-    return image_output, (x_cms, y_cms), None
+    return image_output, (x_cms, y_cms), (0,0,0)

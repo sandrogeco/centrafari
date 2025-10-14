@@ -23,5 +23,7 @@
     "lux_h": 10,
     "cam_g": 0.22,
     "cam_c": 0,
-    "port": 28500
+    "port": 28500,
+    "x_coeff_pixel_m": 1.375,
+    "y_coeff_pixel_m": 1.375
 }
