@@ -56,7 +56,7 @@ def thread_comunicazione(port, cache):
                 msg = "idle "
         try:
             conn = socket.socket()
-            conn.connect(("localhost", port))
+            conn.connect((cache['config'].get('ip',"localhost"), port))
             conn.sendall(msg.encode())
             data = conn.recv(1024).decode("UTF-8")
             cache['stato_comunicazione'].update(decode_cmd(data.strip()))

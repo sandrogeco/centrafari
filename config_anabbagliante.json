@@ -1,6 +1,6 @@
 {
     "DEBUG": true,
-    "CAMERA": true,
+    "CAMERA": false,
     "COMM": true,
     "AUTOEXP":true,
     "width": 630,
@@ -28,5 +28,6 @@
     "margin_r": 0.1,
     "margin_l":0.1,
     "x_coeff_pixel_m": 1.375,
-    "y_coeff_pixel_m": 1.375
+    "y_coeff_pixel_m": 1.375,
+    "ip": "192.168.194.120"
 }
