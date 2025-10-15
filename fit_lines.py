@@ -193,21 +193,24 @@ def fit_lines(image_input,image_output,cache,
         [cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
 #        ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
+        cache['X0'] = X0
+        cache['Y0'] = Y0
+        dx = (X0 - cache['config']['width'] / 2) / cache['stato_comunicazione']['qin']
+        dy = (Y0 - cache['config']['height'] / 2 + cache['stato_comunicazione']['inclinazione']) /cache['stato_comunicazione']['qin']
+        yaw_deg = np.degrees(np.arctan2(dx, 25))  # rotazione orizzontale (destra/sinistra)
+        pitch_deg = np.degrees(np.arctan2(dy, 25))
+        roll_deg = np.degrees(np.arctan(mo))
 
     except Exception as e:
         X0=0
         Y0=0
         mo=0
+        yaw_deg=0
+        roll_deg=0
+        pitch_deg=0
         logging.error(e)
 
-    cache['X0']=X0
-    cache['Y0']=Y0
 
-    dx=(X0-cache['config']['width']/2)*cache['stato_comunicazione']['qin']
-    dy = (Y0 - cache['config']['height'] / 2+cache['stato_comunicazione']['inclinazione'])*cache['stato_comunicazione']['qin']
-    yaw_deg = np.degrees(np.arctan2(dx, 25))  # rotazione orizzontale (destra/sinistra)
-    pitch_deg = np.degrees(np.arctan2(dy, 25))
-    roll_deg = np.degrees(np.arctan(mo))
 
     return image_output,(X0,Y0),(yaw_deg,pitch_deg,roll_deg)
     #print(f"Fit completed: X0={X0:.2f}, Y0={Y0:.2f}, mo={mo:.4f}, mi={mi:.4f}")
