@@ -3,6 +3,7 @@ import cv2
 import logging
 
 from utils import get_colore, disegna_pallino
+from funcs_misc import is_punto_ok
 
 
 def trova_contorni_abbagliante(image_input, image_output, cache):
@@ -45,10 +46,15 @@ def trova_contorni_abbagliante(image_input, image_output, cache):
         try:
             contours, _ = cv2.findContours(image_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             contour = max(contours, key=lambda d: cv2.contourArea(d))
-            cv2.drawContours(image_output, [contour], -1, get_colore('red'), 1)
+            cv2.drawContours(image_output, [contour], -1, get_colore('blue'), 1)
         except Exception as e:
             logging.error(f"trova_contorni_abbagliante e={e}")
+    ptok = is_punto_ok((x_cms, y_cms), cache)
+    if ptok:
+        color = (0, 255, 0)
+    else:
+        color = (255, 0, 0)
 
-    disegna_pallino(image_output, (x_cms, y_cms), 6, 'green', -1)
+    disegna_pallino(image_output, (x_cms, y_cms), 6, color, -1)
 
     return image_output, (x_cms, y_cms), (0,0,0)

@@ -50,12 +50,12 @@ def show_frame( cache, lmain):
         #image_output = cv2.applyColorMap(image_input.copy(), cv2.COLOR_BGR2GRAY)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
         image_view = cv2.cvtColor(image_view, cv2.COLOR_BGR2GRAY)
-        image_output = cv2.cvtColor(image_view.copy(), cv2.COLOR_GRAY2BGR)
+       # image_output = cv2.cvtColor(image_view.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==1:
-        image_output = cv2.applyColorMap(image_view.copy(), cv2.COLOR_BGR2GRAY)
+        image_view = cv2.applyColorMap(image_view.copy(), cv2.COLOR_BGR2GRAY)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
     if stato_comunicazione.get('pattern',0)==2:
-        image_output = cv2.applyColorMap(255-image_view.copy(), cv2.COLORMAP_JET)
+        image_view = cv2.applyColorMap(255-image_view.copy(), cv2.COLORMAP_JET)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
 
 
@@ -68,7 +68,7 @@ def show_frame( cache, lmain):
     if cache['tipo_faro'] == 'fendinebbia':
         image_output, point,angles =fit_lines.fit_lines(image_input,image_view,cache, 5, 40, 120, 1e-8, 1e-8, 1000,False,True)
     elif cache['tipo_faro'] == 'abbagliante':
-        image_output, point,angles = trova_contorni_abbagliante(image_input, image_output, cache)
+        image_output, point,angles = trova_contorni_abbagliante(image_input, image_view, cache)
     sft_x=cache['config']['lux_sft_x']*cache['config']['crop_w']/160
     sft_y = cache['config']['lux_sft_y'] * cache['config']['crop_h'] / 160
     lux = calcola_lux(image_input, image_output, point, (sft_x,sft_y),
