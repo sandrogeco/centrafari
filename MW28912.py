@@ -47,13 +47,11 @@ def show_frame( cache, lmain):
     #image_output= cv2.cvtColor(image_input, cv2.COLOR_GRAY2BGR)
 #    image_output = cv2.cvtColor(image_input.copy(), cv2.COLOR_GRAY2BGR)
     if stato_comunicazione.get('pattern',0)==0:
-        #image_output = cv2.applyColorMap(image_input.copy(), cv2.COLOR_BGR2GRAY)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
-        image_view = cv2.cvtColor(image_view, cv2.COLOR_BGR2GRAY)
-       # image_output = cv2.cvtColor(image_view.copy(), cv2.COLOR_GRAY2BGR)
+        #image_view = cv2.cvtColor(image_view, cv2.COLOR_BGR2GRAY)
     if stato_comunicazione.get('pattern',0)==1:
-        image_view = cv2.applyColorMap(image_view.copy(), cv2.COLOR_BGR2GRAY)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
+       # image_view = cv2.applyColorMap(image_view.copy(), cv2.COLOR_BGR2GRAY)
     if stato_comunicazione.get('pattern',0)==2:
         image_view = cv2.applyColorMap(255-image_view.copy(), cv2.COLORMAP_JET)
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
