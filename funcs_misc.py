@@ -31,7 +31,7 @@ def preprocess(image, cache):
     return image_o,image
 
 
-def disegna_punto(image_output, point, cache):
+def is_punto_ok(point, cache):
     stato_comunicazione = cache['stato_comunicazione']
     width = cache["config"]["width"]
     height = cache["config"]["height"]
@@ -42,9 +42,15 @@ def disegna_punto(image_output, point, cache):
     is_punto_centrato = (width / 2 - toh) <= point[0] <= (width / 2 + toh) \
         and (height / 2 - tov + inclinazione) <= point[1] <= (height / 2 + tov + inclinazione)
 
+    return is_punto_centrato
     #disegna_pallino(image_output, point, 10, 'green' if is_punto_centrato else 'red', 1)
 
 
 def visualizza_croce_riferimento(frame, x, y, width, heigth):
     disegna_croce(frame, (x - width / 2, y - heigth / 2), 1000, 1, 'green')
     disegna_croce(frame, (x + width / 2, y + heigth / 2), 1000, 1, 'green')
+
+def point_in_rect(pt, rect):
+    x, y = pt
+    rx, ry, rw, rh = rect
+    return (rx <= x <= rx + rw) and (ry <= y <= ry + rh)

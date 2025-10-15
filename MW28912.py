@@ -15,7 +15,7 @@ import signal
 from datetime import datetime
 import logging
 import fit_lines
-from funcs_misc import preprocess, visualizza_croce_riferimento, disegna_punto
+from funcs_misc import preprocess, visualizza_croce_riferimento
 from funcs_anabbagliante import rileva_punto_angoloso,rileva_punto_angoloso1
 from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
@@ -92,7 +92,7 @@ def show_frame( cache, lmain):
         )
 
     if point:
-        disegna_punto(image_output, point, cache)
+
         cache['queue'].put({ 'posiz_pattern_x': point[0], 'posiz_pattern_y': point[1], 'lux': lux ,'yaw':angles[0],'pitch':angles[1],'roll':angles[2]})
     else:
         cache['queue'].put({'posiz_pattern_x': 0, 'posiz_pattern_y': 0, 'lux': lux,'yaw':0,'pitch':0,'roll':0})

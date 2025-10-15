@@ -36,7 +36,7 @@ kill_script() {
         echo 1234 | sudo -S pkill -9 mw28912 || true
 
         echo 1234 | sudo -S pkill -15 "emulatore_proteus.py" || true
-        echo 1234 | sudo -S pkill -15 "usb_video_capture_cm4" || true
+        echo 1234 | sudo -S pkill -15 "usb_video_captu" || true
         echo 1234 | sudo -S rm -f /tmp/frame.jpg
 EOF
 }
