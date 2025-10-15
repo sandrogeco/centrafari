@@ -11,7 +11,7 @@ def decode_cmd(resp):
         # stato_comunicazione['mpx'] = float(resp[16:24])
         stato_comunicazione['inclinazione'] = int(resp[27:31])
         stato_comunicazione['TOH'] = int(resp[34:37])
-        # stato_comunicazione['GSF'] = float(resp[40:43])
+        stato_comunicazione['qin'] = float(resp[40:45])
         # stato_comunicazione['TAX'] = float(resp[46:51])
         # stato_comunicazione['TAY'] = float(resp[54:59])
         # stato_comunicazione['TNX'] = float(resp[62:67])
