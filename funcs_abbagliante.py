@@ -57,4 +57,10 @@ def trova_contorni_abbagliante(image_input, image_output, cache):
 
     disegna_pallino(image_output, (x_cms, y_cms), 6, color, -1)
 
-    return image_output, (x_cms, y_cms), (0,0,0)
+    dx=(x_cms-cache['config']['width']/2)*cache['config']['x_coeff_pixel_m']
+    dy = (y_cms - cache['config']['height'] / 2)*cache['config']['y_coeff_pixel_m']
+    yaw_deg = np.degrees(np.arctan2(dx, 25))  # rotazione orizzontale (destra/sinistra)
+    pitch_deg = np.degrees(np.arctan2(dy, 25))
+    roll_deg =0
+
+    return image_output, (x_cms, y_cms), (yaw_deg,pitch_deg,0)
