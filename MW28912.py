@@ -57,7 +57,7 @@ def show_frame( cache, lmain):
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
 
     dim=image_view.shape
-    image_view=cv2.resize(image_view, (dim[0]*5,dim[1]*5), interpolation=cv2.INTER_AREA)
+   # image_view=cv2.resize(image_view, (dim[1]*5,dim[0]*5), interpolation=cv2.INTER_AREA)
 
 
 
@@ -103,7 +103,7 @@ def show_frame( cache, lmain):
         cv2.putText(image_output, msg, (5, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
         cache['t0'] = t0
 
-    image_output = cv2.resize(image_output, (dim[0] , dim[1] ), interpolation=cv2.INTER_AREA)
+   # image_output = cv2.resize(image_output, (dim[1] , dim[0] ), interpolation=cv2.INTER_AREA)
     img = PIL.Image.fromarray(image_output)
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
