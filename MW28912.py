@@ -78,6 +78,7 @@ def show_frame( cache, lmain):
 
     if cache['pos']=='sx':
         point=(cache['config']['width']-point[0],point[1])
+        image_output = cv2.flip(image_output, 1)
     logging.debug("pos "+cache['pos'])
 
 
