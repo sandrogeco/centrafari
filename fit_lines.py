@@ -102,8 +102,12 @@ def fit_lines(image_input,image_output,cache,
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
         rightest_upper=pts[np.lexsort((pts[:, 0], pts[:, 1]))]
         y_h=leftset_upper[0][1]
-        x_min=leftset_upper[0][0]
-        x_max=rightest_upper[0][0]
+        if flat:
+            x_min=np.min(pts[:,0])
+            x_max = np.max(pts[:, 0])
+        else:
+            x_min=leftset_upper[0][0]
+            x_max=rightest_upper[0][0]
       #  margin = (x_max - x_min) * margin_frac
         try:
             marginl=cache['margin_auto']
@@ -121,9 +125,9 @@ def fit_lines(image_input,image_output,cache,
             cache['margin_auto']=0
             cache['s_err']=np.Inf
             cache['r_bound'] = x_max
-        marginl=20
+        marginl=10
         left_bound = x_min + marginl
-        right_bound =np.minimum(x_max,cache['r_bound'])#x_max -marginl#cache['X0']+(cache['X0']-left_bound)
+        right_bound =np.minimum(x_max,cache['r_bound'])-marginl#x_max -marginl#cache['X0']+(cache['X0']-left_bound)
         logging.debug(f"cachex0:{cache['X0']}")
         logging.debug(f"left_bound:{left_bound}")
         logging.debug(f"right_bound:{right_bound}")
