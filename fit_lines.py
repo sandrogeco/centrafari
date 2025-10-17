@@ -203,6 +203,7 @@ def fit_lines(image_input,image_output,cache,
             color=(255,0,0)
         cv2.circle(image_output,(int(round(X0)),int(round(Y0))),2,color,2,-1)
         [cv2.circle(image_output, (int(p[0]),int(p[1])), 1, color, 1, lineType=cv2.LINE_AA) for p in top_pts]
+      #  [cv2.circle(image_output, (int(p[0])-1, int(p[1])-1), 1, (255,0,0), 1, lineType=cv2.LINE_AA) for p in top_pts]
         #draw_polyline_aa(image_output,top_pts,color)
 
         #[cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
