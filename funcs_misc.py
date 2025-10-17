@@ -54,3 +54,49 @@ def point_in_rect(pt, rect):
     x, y = pt
     rx, ry, rw, rh = rect
     return (rx <= x <= rx + rw) and (ry <= y <= ry + rh)
+
+import cv2
+import numpy as np
+
+def blur_and_sharpen(img, sigma=1.5, strength=0.8, eight_neighbors=False):
+    """
+    Anti-alias 'morbido' via GaussianBlur + sharpen con filter2D.
+
+    :param img: immagine BGR/GRAY (uint8 o float32/float64)
+    :param sigma: intensità blur gaussiano (1.0–3.0 tipico)
+    :param strength: forza sharpen (0.3–1.2; più alto = più nitido)
+    :param eight_neighbors: False => kernel 'a croce' (4-neighbors), True => 8-neighbors
+    :return: immagine filtrata, stesso dtype dell'input
+    """
+    # Lavoro in float [0,1] per stabilità
+    src_dtype = img.dtype
+    x = img.astype(np.float32)
+    if x.max() > 1.5:  # probabilmente uint8
+        x /= 255.0
+
+    # 1) BLUR (anti-alias / smoothing)
+    x_blur = cv2.GaussianBlur(x, (0, 0), sigmaX=sigma, sigmaY=sigma)
+
+    # 2) SHARPEN con filter2D
+    a = float(strength)
+
+    if not eight_neighbors:
+        # kernel 'a croce' (4-neighbors): [[0,-a,0],[-a,1+4a,-a],[0,-a,0]]
+        k = np.array([[0, -a, 0],
+                      [-a, 1 + 4 * a, -a],
+                      [0, -a, 0]], dtype=np.float32)
+    else:
+        # kernel 8-neighbors: tutti intorno pesati -a, centro 1+8a (più aggressivo)
+        k = np.full((3, 3), -a, np.float32)
+        k[1, 1] = 1 + 8 * a
+
+    x_sharp = cv2.filter2D(x_blur, ddepth=-1, kernel=k, borderType=cv2.BORDER_REPLICATE)
+
+    # clamp e ritorno al dtype originale
+    x_sharp = np.clip(x_sharp, 0.0, 1.0)
+    if src_dtype == np.uint8:
+        x_sharp = (x_sharp * 255.0 + 0.5).astype(np.uint8)
+    else:
+        x_sharp = x_sharp.astype(src_dtype)
+
+    return x_sharp

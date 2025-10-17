@@ -86,7 +86,7 @@ def fit_lines(image_input,image_output,cache,
         pts,ctrs = extract_contour_points(edges)
         if ctrs:
             largest = max(ctrs, key=cv2.contourArea)
-            cv2.drawContours(image_output, [largest], -1, (0,0,255), 1)
+            cv2.drawContours(image_output, [largest], -1, (0,0,255), 1,lineType=cv2.LINE_AA)
 
         leftset_upper=pts[np.lexsort((pts[:, 1], pts[:, 0]))]
         rightest_upper=pts[np.lexsort((pts[:, 0], pts[:, 1]))]
@@ -175,23 +175,20 @@ def fit_lines(image_input,image_output,cache,
         h, w = image_input.shape
         xs = np.array([0, X0,w])
         ys=two_lines(xs,X0,Y0,mo,mi)
-        cv2.line(image_output, (int(round(xs[0])), int(round(ys[0]))), (int(round(xs[1])), int(round(ys[1]))), (0,255,255), 1)
-        cv2.line(image_output, (int(round(xs[1])), int(round(ys[1]))), (int(round(xs[2])), int(round(ys[2]))), (0, 255, 255), 1)
+        cv2.line(image_output, (int(round(xs[0])), int(round(ys[0]))), (int(round(xs[1])), int(round(ys[1]))), (0,255,255), 1,lineType=cv2.LINE_AA)
+        cv2.line(image_output, (int(round(xs[1])), int(round(ys[1]))), (int(round(xs[2])), int(round(ys[2]))), (0, 255, 255), 1,lineType=cv2.LINE_AA)
         ptok=is_punto_ok((X0,Y0),cache)
         if ptok:
             color=(0,255,0)
         else:
             color=(255,0,0)
         cv2.circle(image_output,(int(round(X0)),int(round(Y0))),2,color,2,-1)
-        [cv2.circle(image_output, (int(p[0]),int(p[1])), 1, color, 1, -1) for p in top_pts]
-        #cv2.line(image_output, (int(round(xs[2])), int(round(ys[2]))), (int(round(xs[3])), int(round(ys[3]))), (0, 0, 255), 1)
+        [cv2.circle(image_output, (int(p[0]),int(p[1])), 1, color, 1, lineType=cv2.LINE_AA) for p in top_pts]
 
 
-
-
-
-        [cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
+        #[cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
 #        ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
 
         cache['X0'] = X0
         cache['Y0'] = Y0

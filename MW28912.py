@@ -15,7 +15,7 @@ import signal
 from datetime import datetime
 import logging
 import fit_lines
-from funcs_misc import preprocess, visualizza_croce_riferimento
+from funcs_misc import preprocess, visualizza_croce_riferimento,blur_and_sharpen
 from funcs_anabbagliante import rileva_punto_angoloso,rileva_punto_angoloso1
 from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
@@ -57,8 +57,6 @@ def show_frame( cache, lmain):
         image_input = cv2.cvtColor(image_input, cv2.COLOR_BGR2GRAY)
 
     dim=image_view.shape
-   # image_view=cv2.resize(image_view, (dim[1]*5,dim[0]*5), interpolation=cv2.INTER_AREA)
-
 
 
     logging.debug(f"[PT] {stato_comunicazione.get('pattern',0)}")
@@ -103,10 +101,24 @@ def show_frame( cache, lmain):
         cv2.putText(image_output, msg, (5, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, get_colore('green'), 1)
         cache['t0'] = t0
 
-    dim = image_output.shape
-    image_output=cv2.resize(image_output, (int(dim[1]/4),int(dim[0]/4)), interpolation=cv2.INTER_AREA)
 
-    image_output = cv2.resize(image_output, (dim[1]*4 , dim[0]*4 ), interpolation=cv2.INTER_AREA)
+    image_output=blur_and_sharpen(image_output,1.5,0.5,True)
+    # c = 5
+    # image_output=cv2.resize(image_output, (dim[1]*c,dim[0]*c), interpolation=cv2.INTER_NEAREST)
+    # sigma=c*1.2
+    # image_output=cv2.GaussianBlur(image_output, (0,0), sigmaX=sigma, sigmaY=sigma)
+    # import numpy as np
+    # kernel = np.array([[-1, -1, -1],
+    #                    [-1, 9, -1],
+    #                    [-1, -1, -1]], np.float32)
+    # kernel = np.array([[0, -1, 0],
+    #                    [-1, 5, -1],
+    #                    [0, -1, 0]], np.float32)
+    #
+    #
+    # image_output = cv2.filter2D(image_output, -1, kernel)
+    # image_output = cv2.resize(image_output,(dim[1] , dim[0] ), interpolation=cv2.INTER_AREA)
+
     img = PIL.Image.fromarray(image_output)
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
