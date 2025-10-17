@@ -100,3 +100,93 @@ def blur_and_sharpen(img, sigma=1.5, strength=0.8, eight_neighbors=False):
         x_sharp = x_sharp.astype(src_dtype)
 
     return x_sharp
+
+
+def sharpen_dog(img, sigma_small=0.8, sigma_large=1.8, amount=1.0):
+    # band = G(small) - G(large): medie frequenze (niente jaggies 1px)
+    x = img.astype(np.float32)
+    x=cv2.normalize(x, None, 0, 255, cv2.NORM_MINMAX)
+    g1 = cv2.GaussianBlur(x, (0,0), sigma_small)
+    g1=cv2.normalize(g1, None, 0, 255, cv2.NORM_MINMAX)
+
+   # g2 = cv2.GaussianBlur(x, (0,0), sigma_large)
+  #  band = g1 - g2
+    out = (1-amount)*x + amount * g1
+    out = cv2.normalize(out, None, 0, 255, cv2.NORM_MINMAX)
+  #   if img.dtype == np.uint8:
+  #       out = out.astype(np.float32)
+  #       out = (out - out.min()) / (out.max() - out.min() + 1e-8)  # eviti div/0
+  #       out = (out * 255.0).astype(np.uint8)
+  #   else:
+    out = out.astype(img.dtype)
+    return out
+
+# Esempi:
+# out = sharpen_dog(image_output, sigma_small=0.9, sigma_large=2.0, amount=1.2)
+
+
+def gaussian_kernel(size=5, sigma=1.2):
+    ax = np.arange(-(size//2), size//2 + 1, dtype=np.float32)
+    xx, yy = np.meshgrid(ax, ax)
+    g = np.exp(-(xx**2 + yy**2) / (2*sigma**2))
+    g /= g.sum()
+    return g
+
+def unsharp_kernel(size=5, sigma=1.2, alpha=0.6):
+    g = gaussian_kernel(size, sigma)
+    k = -(alpha) * g
+    k[size//2, size//2] += (1.0 + alpha)   # (1+α)*δ - α*G
+    return k.astype(np.float32)
+
+def sharpen_bandlimited(img, size=5, sigma=1.2, alpha=0.6):
+    src_dtype = img.dtype
+    x = img.astype(np.float32)
+    out = cv2.filter2D(x, ddepth=-1, kernel=unsharp_kernel(size, sigma, alpha),
+                       borderType=cv2.BORDER_REPLICATE)
+    if src_dtype == np.uint8:
+        out = np.clip(out, 0, 255).astype(np.uint8)
+    else:
+        out = out.astype(src_dtype)
+    return out
+
+
+import cv2
+import numpy as np
+
+def draw_polyline_aa(img, points, color=(255,255,255), thickness=2,
+                     closed=False, round_caps=True, round_joins=True):
+    """
+    Disegna una polilinea AA robusta segmentando in linee.
+    - round_caps: cappucci arrotondati alle estremità (cerchio)
+    - round_joins: giunti arrotondati ai vertici (cerchio)
+    """
+    pts = np.asarray(points, dtype=np.int32)
+    if len(pts) < 2:
+        return img
+
+    t = max(1, int(thickness))
+    r = max(1, t // 2)  # raggio per cap/join “round”
+
+    # segmenti
+    for i in range(len(pts) - 1):
+        p1 = tuple(pts[i])
+        p2 = tuple(pts[i+1])
+        cv2.line(img, p1, p2, color, t, lineType=cv2.LINE_AA)
+
+    # chiusura opzionale
+    if closed and len(pts) > 2:
+        cv2.line(img, tuple(pts[-1]), tuple(pts[0]), color, t, lineType=cv2.LINE_AA)
+
+    # cappucci arrotondati alle estremità (solo se polilinea aperta)
+    if round_caps and not closed:
+        cv2.circle(img, tuple(pts[0]), r, color, -1, lineType=cv2.LINE_AA)
+        cv2.circle(img, tuple(pts[-1]), r, color, -1, lineType=cv2.LINE_AA)
+
+    # giunti arrotondati ai vertici (per chiusa: tutti; per aperta: interni)
+    if round_joins:
+        start = 0 if closed else 1
+        end = len(pts) if closed else len(pts)-1
+        for i in range(start, end):
+            cv2.circle(img, tuple(pts[i % len(pts)]), r, color, -1, lineType=cv2.LINE_AA)
+
+    return img

@@ -15,7 +15,7 @@ import signal
 from datetime import datetime
 import logging
 import fit_lines
-from funcs_misc import preprocess, visualizza_croce_riferimento,blur_and_sharpen
+from funcs_misc import preprocess, visualizza_croce_riferimento,blur_and_sharpen,sharpen_dog,sharpen_bandlimited
 from funcs_anabbagliante import rileva_punto_angoloso,rileva_punto_angoloso1
 from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
@@ -102,11 +102,13 @@ def show_frame( cache, lmain):
         cache['t0'] = t0
 
 
-    image_output=blur_and_sharpen(image_output,1.5,0.5,True)
+    #image_output=blur_and_sharpen(image_output,1.5,0.5,True)
+    image_output=sharpen_dog(image_output,2,4,0.7)
+    #image_output=sharpen_bandlimited(image_output,5,4,2)
     # c = 5
     # image_output=cv2.resize(image_output, (dim[1]*c,dim[0]*c), interpolation=cv2.INTER_NEAREST)
-    # sigma=c*1.2
-    # image_output=cv2.GaussianBlur(image_output, (0,0), sigmaX=sigma, sigmaY=sigma)
+
+
     # import numpy as np
     # kernel = np.array([[-1, -1, -1],
     #                    [-1, 9, -1],

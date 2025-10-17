@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from typing import Tuple
 from scipy.optimize import curve_fit
-from funcs_misc import is_punto_ok
+from funcs_misc import is_punto_ok,draw_polyline_aa
 import logging
 
 from utils import disegna_pallino
@@ -68,7 +68,18 @@ def two_lines(x: np.ndarray,
         pass
     return y
 
-# 4. Main fit routine
+
+def one_lines(x: np.ndarray,
+              X0: float, Y0: float,
+              mo: float) -> np.ndarray:
+
+
+    y=mo*(x-X0)+Y0
+
+    return y
+
+
+
 def fit_lines(image_input,image_output,cache,
               blur_ksize: int = 5,
               canny_lo: int = 40,
@@ -136,40 +147,43 @@ def fit_lines(image_input,image_output,cache,
         y_data = pts[:, 1]
 
 
-        p0 = [np.mean(x_data), np.max(y_data)-1, -0.01, -1.0]
-        # Ensure X0 within data range; Y0 must be above contour (<= min y_data)
-        bounds = (
-            [np.min(x_data), 0.0,-0.5,-np.Inf],
-            [np.max(x_data), np.max(y_data), 0,0]
-        )
+
+
         if flat:
-            xm=(np.max(x_data)+np.min(x_data))/2
+            p0 = [np.mean(x_data), np.max(y_data) - 1, -0.01]
+           # xm=(np.max(x_data)+np.min(x_data))/2
             bounds = (
-                [xm*0.95, 0.0, -0.5, -np.Inf],
-                [xm*1.15, np.max(y_data), 0, 0]
+                [np.min(x_data), 0.0, -np.Inf],
+                [np.max(x_data), np.max(y_data),np.Inf]
             )
-        try:
-            popt, _ = curve_fit(
-                two_lines, x_data, y_data,
-                p0=p0, bounds=bounds,
-                ftol=ftol, xtol=xtol, maxfev=maxfev
+            try:
+                popt, _ = curve_fit(
+                    one_lines, x_data, y_data,
+                    p0=p0, bounds=bounds,
+                    ftol=ftol, xtol=xtol, maxfev=maxfev
+                )
+                X0, Y0, mo= popt
+                mi=0
+            except Exception as e:
+                cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
+
+
+        else:
+            p0 = [np.mean(x_data), np.max(y_data) - 1, -0.01, -1.0]
+            bounds = (
+                [np.min(x_data), 0.0, -0.5, -np.Inf],
+                [np.max(x_data), np.max(y_data), 0, 0]
             )
-            X0, Y0, mo, mi= popt
+            try:
+                popt, _ = curve_fit(
+                    two_lines, x_data, y_data,
+                    p0=p0, bounds=bounds,
+                    ftol=ftol, xtol=xtol, maxfev=maxfev
+                )
+                X0, Y0, mo, mi= popt
 
-        except Exception as e:
-            cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
-
-        #  s=np.sum((y_data - two_lines(x_data, X0, Y0, mo, mi)) ** 2) / len(x_data)
-      #  image_output=10*(image_output//10)
-
-        #centratura aut
-      #   if (np.abs(s-cache['s_err'])/s>0.025)and((left_bound-x_min)<(x_max-x_min)*0.25):
-      #       cache['margin_auto']=marginl+2
-      #       cache['r_bound']=2*X0+left_bound
-      #
-      #       cache['s_err']=s
-       # msg="old "+str(cache['s_err']*1.05)+" new "+str(s)+" margin "+str(marginl)
-       # cv2.putText(image_output, msg, (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0,255,0), 1)
+            except Exception as e:
+                cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
 
 
         h, w = image_input.shape
