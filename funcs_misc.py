@@ -153,40 +153,45 @@ def sharpen_bandlimited(img, size=5, sigma=1.2, alpha=0.6):
 import cv2
 import numpy as np
 
-def draw_polyline_aa(img, points, color=(255,255,255), thickness=2,
-                     closed=False, round_caps=True, round_joins=True):
+import cv2
+import numpy as np
+import math
+import cv2
+import numpy as np
+
+def draw_polyline_aa(img, points, color=(255,255,255), thickness=2, closed=False):
     """
-    Disegna una polilinea AA robusta segmentando in linee.
-    - round_caps: cappucci arrotondati alle estremità (cerchio)
-    - round_joins: giunti arrotondati ai vertici (cerchio)
+    Disegna una polilinea AA con giunzioni arrotondate e cappucci arrotondati.
+    Simula un vero polilines antialiasato (migliore di cv2.polylines).
+
+    :param img: immagine BGR o GRAY
+    :param points: lista di (x, y)
+    :param color: colore BGR
+    :param thickness: spessore linea
+    :param closed: se True chiude la polilinea
     """
     pts = np.asarray(points, dtype=np.int32)
     if len(pts) < 2:
         return img
 
-    t = max(1, int(thickness))
-    r = max(1, t // 2)  # raggio per cap/join “round”
+    r = max(1, thickness // 2)
+    n = len(pts)
 
-    # segmenti
-    for i in range(len(pts) - 1):
-        p1 = tuple(pts[i])
-        p2 = tuple(pts[i+1])
-        cv2.line(img, p1, p2, color, t, lineType=cv2.LINE_AA)
+    # disegna tutti i segmenti
+    for i in range(n - 1):
+        cv2.line(img, tuple(pts[i]), tuple(pts[i+1]), color, thickness, cv2.LINE_AA)
+    if closed:
+        cv2.line(img, tuple(pts[-1]), tuple(pts[0]), color, thickness, cv2.LINE_AA)
 
-    # chiusura opzionale
-    if closed and len(pts) > 2:
-        cv2.line(img, tuple(pts[-1]), tuple(pts[0]), color, t, lineType=cv2.LINE_AA)
+    # arrotonda giunzioni
+    join_start = 0 if closed else 1
+    join_end = n if closed else n - 1
+    for i in range(join_start, join_end):
+        cv2.circle(img, tuple(pts[i % n]), r, color, -1, cv2.LINE_AA)
 
-    # cappucci arrotondati alle estremità (solo se polilinea aperta)
-    if round_caps and not closed:
-        cv2.circle(img, tuple(pts[0]), r, color, -1, lineType=cv2.LINE_AA)
-        cv2.circle(img, tuple(pts[-1]), r, color, -1, lineType=cv2.LINE_AA)
-
-    # giunti arrotondati ai vertici (per chiusa: tutti; per aperta: interni)
-    if round_joins:
-        start = 0 if closed else 1
-        end = len(pts) if closed else len(pts)-1
-        for i in range(start, end):
-            cv2.circle(img, tuple(pts[i % len(pts)]), r, color, -1, lineType=cv2.LINE_AA)
+    # cappucci alle estremità (solo se aperta)
+    if not closed:
+        cv2.circle(img, tuple(pts[0]), r, color, -1, cv2.LINE_AA)
+        cv2.circle(img, tuple(pts[-1]), r, color, -1, cv2.LINE_AA)
 
     return img

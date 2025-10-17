@@ -167,7 +167,7 @@ def fit_lines(image_input,image_output,cache,
                     ftol=ftol, xtol=xtol, maxfev=maxfev
                 )
                 X0, Y0, mo= popt
-                X0=int((np.max(x_data)-np.min(x_data))/2)
+                X0=int((np.max(x_data)+np.min(x_data))/2)
                 mi=0
             except Exception as e:
                 cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
@@ -203,7 +203,7 @@ def fit_lines(image_input,image_output,cache,
             color=(255,0,0)
         cv2.circle(image_output,(int(round(X0)),int(round(Y0))),2,color,2,-1)
         [cv2.circle(image_output, (int(p[0]),int(p[1])), 1, color, 1, lineType=cv2.LINE_AA) for p in top_pts]
-
+        #draw_polyline_aa(image_output,top_pts,color)
 
         #[cv2.circle(image_output,(e[0],e[1]),1,(255,0,0),-1) for e in edges]
 #        ctrs, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)

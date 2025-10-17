@@ -103,7 +103,7 @@ def show_frame( cache, lmain):
 
 
     #image_output=blur_and_sharpen(image_output,1.5,0.5,True)
-    image_output=sharpen_dog(image_output,2,4,0.7)
+    #image_output=sharpen_dog(image_output,2,4,0.7)
     #image_output=sharpen_bandlimited(image_output,5,4,2)
     # c = 5
     # image_output=cv2.resize(image_output, (dim[1]*c,dim[0]*c), interpolation=cv2.INTER_NEAREST)
