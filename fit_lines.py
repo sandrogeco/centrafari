@@ -167,6 +167,7 @@ def fit_lines(image_input,image_output,cache,
                     ftol=ftol, xtol=xtol, maxfev=maxfev
                 )
                 X0, Y0, mo= popt
+                X0=int((np.max(x_data)-np.min(x_data)/2)
                 mi=0
             except Exception as e:
                 cv2.putText(image_output, str(e), (5, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
