@@ -83,12 +83,14 @@ def show_frame( cache, lmain):
     if stato_comunicazione.get('croce', 0) == 1:
         if cache['tipo_faro'] == 'fendinebbia':
 
-            disegna_segmento(image_output, int(cache['config']['width'] / 2),
-                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0)-stato_comunicazione.get('TOV', 50),1,'green')
-            disegna_segmento(image_output, int(cache['config']['width'] / 2),
-                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione',
-                                                                                          0) + stato_comunicazione.get(
-                                 'TOV', 50), 1, 'green')
+            disegna_segmento(image_output, (0,
+                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0)-stato_comunicazione.get('TOV', 50)),
+                             (int(cache['config']['width']),
+                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0)-stato_comunicazione.get('TOV', 50)),1,'green')
+            disegna_segmento(image_output, (0,
+                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0)+stato_comunicazione.get('TOV', 50)),
+                             (int(cache['config']['width']),
+                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0)+stato_comunicazione.get('TOV', 50)),1,'green')
 
 
         else:
