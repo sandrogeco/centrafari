@@ -1,8 +1,8 @@
 {
     "DEBUG": true,
-    "CAMERA": false,
-    "COMM": false,
-    "AUTOEXP":true,
+    "CAMERA": true,
+    "COMM": true,
+    "AUTOEXP": true,
     "width": 630,
     "height": 320,
     "window_shift_x": 278,
@@ -12,7 +12,7 @@
     "brightness": 0,
     "contrast": 100,
     "saturation": 0,
-    "exposure_absolute": 100,
+    "exposure_absolute": 1000,
     "numero_medie_punto": 5,
     "lux_sft_x": 20,
     "lux_sft_y": 20,
@@ -22,12 +22,11 @@
     "cam_c": 0,
     "port": 28500,
     "crop_center": [
-        319,
-        223
+        317,
+        202
     ],
     "margin_r": 0.1,
-    "margin_l":0.1,
+    "margin_l": 0.1,
     "x_coeff_pixel_m": 1.375,
-    "y_coeff_pixel_m": 1.375,
-    "ip": "192.168.194.120"
+    "y_coeff_pixel_m": 1.375
 }

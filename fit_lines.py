@@ -202,7 +202,14 @@ def fit_lines(image_input,image_output,cache,
         else:
             color=(255,0,0)
         cv2.circle(image_output,(int(round(X0)),int(round(Y0))),2,color,2,-1)
-        [cv2.circle(image_output, (int(p[0]),int(p[1])), 1, color, 1, lineType=cv2.LINE_AA) for p in top_pts]
+        for p in top_pts:
+            image_output[int(p[1]),int(p[0])]=0
+        img_temp=image_output.copy()*0
+        [cv2.circle(img_temp, (int(p[0]),int(p[1])), 1, color, 1, lineType=cv2.LINE_AA) for p in top_pts]
+        img_temp= cv2.GaussianBlur(img_temp, (0, 0), 1.5)
+      #  image_output=image_output+img_temp
+        #image_output[img_temp>0]=img_temp[img_temp>0]
+       # image_output = cv2.normalize(image_output, None, 0, 255, cv2.NORM_MINMAX)
       #  [cv2.circle(image_output, (int(p[0])-1, int(p[1])-1), 1, (255,0,0), 1, lineType=cv2.LINE_AA) for p in top_pts]
         #draw_polyline_aa(image_output,top_pts,color)
 

@@ -21,7 +21,7 @@ from funcs_abbagliante import trova_contorni_abbagliante
 from funcs_luminosita import calcola_lux
 from camera import set_camera, apri_camera, autoexp
 from comms import thread_comunicazione
-from utils import uccidi_processo, get_colore
+from utils import uccidi_processo, get_colore, disegna_segmento
 
 
 def show_frame( cache, lmain):
@@ -81,13 +81,24 @@ def show_frame( cache, lmain):
 
 
     if stato_comunicazione.get('croce', 0) == 1:
-        visualizza_croce_riferimento(
-            image_output,
-            int(cache['config']['width'] / 2),
-            int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0),
-            2 * stato_comunicazione.get('TOV', 50),
-            2 * stato_comunicazione.get('TOH', 50)
-        )
+        if cache['tipo_faro'] == 'fendinebbia':
+
+            disegna_segmento(image_output, int(cache['config']['width'] / 2),
+                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0)-stato_comunicazione.get('TOV', 50),1,'green')
+            disegna_segmento(image_output, int(cache['config']['width'] / 2),
+                             int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione',
+                                                                                          0) + stato_comunicazione.get(
+                                 'TOV', 50), 1, 'green')
+
+
+        else:
+            visualizza_croce_riferimento(
+                image_output,
+                int(cache['config']['width'] / 2),
+                int(cache['config']['height'] / 2) + stato_comunicazione.get('inclinazione', 0),
+                2 * stato_comunicazione.get('TOV', 50),
+                2 * stato_comunicazione.get('TOH', 50)
+            )
 
     if point:
 
