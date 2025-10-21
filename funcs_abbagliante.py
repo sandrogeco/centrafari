@@ -51,9 +51,9 @@ def trova_contorni_abbagliante(image_input, image_output, cache):
             logging.error(f"trova_contorni_abbagliante e={e}")
     ptok = is_punto_ok((x_cms, y_cms), cache)
     if ptok:
-        color = (0, 255, 0)
+        color ='green'
     else:
-        color = (255, 0, 0)
+        color = 'red'
 
     disegna_pallino(image_output, (x_cms, y_cms), 6, color, -1)
 
