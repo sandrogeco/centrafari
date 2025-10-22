@@ -42,13 +42,13 @@ def trova_contorni_abbagliante(image_input, image_output, cache):
         logging.error("punto abbagliante non trovato")
         return image_output, None, "punto non trovato"
 
-    if cache['DEBUG']:
-        try:
-            contours, _ = cv2.findContours(image_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            contour = max(contours, key=lambda d: cv2.contourArea(d))
-            cv2.drawContours(image_output, [contour], -1, get_colore('blue'), 1)
-        except Exception as e:
-            logging.error(f"trova_contorni_abbagliante e={e}")
+
+    try:
+        contours, _ = cv2.findContours(image_tmp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour = max(contours, key=lambda d: cv2.contourArea(d))
+        cv2.drawContours(image_output, [contour], -1, get_colore('blue'), 1)
+    except Exception as e:
+        logging.error(f"trova_contorni_abbagliante e={e}")
     ptok = is_punto_ok((x_cms, y_cms), cache)
     if ptok:
         color ='green'
